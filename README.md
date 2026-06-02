@@ -280,9 +280,10 @@ pip install -r requirements.txt
 # Variables de entorno (crear .env)
 DB_NAME=streaming_business
 DB_USER=root
-DB_PASSWORD=1095827105
+DB_PASSWORD=<tu-password>
 DB_HOST=localhost
 DB_PORT=3306
+SECRET_KEY=<generar-con-python-manage.py-shell-o-secrets>
 
 # Migrar
 python manage.py migrate

@@ -4,6 +4,63 @@ from rest_framework.response import Response
 
 
 @api_view(["GET"])
+def dashboard_vencidas(request):
+    """Cuentas y pantallas por vencer o vencidas."""
+    from accounts.models import Account
+    from screens.models import Screen
+    from customer_accounts.models import CustomerAccount
+    from datetime import date
+
+    hoy = date.today()
+
+    # Cuentas vencidas o por vencer
+    cuentas = Account.objects.filter(
+        status__in=["por_vencer", "vencida"]
+    ).select_related("platform", "provider").values(
+        "id", "platform__name", "status", "fecha_compra"
+    ).order_by("status", "fecha_compra")
+
+    # Pantallas vencidas o por vencer
+    pantallas = Screen.objects.filter(
+        status__in=["por_vencer", "vencida"]
+    ).select_related("account", "customer").values(
+        "id", "pin", "status", "fecha_inicio",
+        "account__id", "customer__name"
+    ).order_by("status", "fecha_inicio")
+
+    # Cuentas de clientes vencidas o por vencer
+    customer_accounts = CustomerAccount.objects.filter(
+        status__in=["por_vencer", "vencida"]
+    ).select_related("account", "customer").values(
+        "id", "status", "fecha_inicio",
+        "account__id", "customer__name"
+    ).order_by("status", "fecha_inicio")
+
+    return Response({
+        "fecha_consulta": hoy,
+        "total_vencidas": len(cuentas) + len(pantallas) + len(customer_accounts),
+        "cuentas_por_vencer": [
+            c for c in cuentas if c["status"] == "por_vencer"
+        ],
+        "cuentas_vencidas": [
+            c for c in cuentas if c["status"] == "vencida"
+        ],
+        "pantallas_por_vencer": [
+            p for p in pantallas if p["status"] == "por_vencer"
+        ],
+        "pantallas_vencidas": [
+            p for p in pantallas if p["status"] == "vencida"
+        ],
+        "customer_accounts_por_vencer": [
+            ca for ca in customer_accounts if ca["status"] == "por_vencer"
+        ],
+        "customer_accounts_vencidas": [
+            ca for ca in customer_accounts if ca["status"] == "vencida"
+        ],
+    })
+
+
+@api_view(["GET"])
 def dashboard_summary(request):
     """Resumen general del negocio."""
     from accounts.models import Account

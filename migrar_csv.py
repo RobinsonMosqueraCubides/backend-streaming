@@ -1,19 +1,33 @@
 #!/usr/bin/env python3
 """
 Migración: CSV Correos A → Base streaming_business
+
+Script one-off para cargar datos históricos desde un CSV exportado de Google Sheets.
+Usa pymysql directamente por velocidad (bypassea el ORM para inserts masivos).
+
+Uso:
+    python migrar_csv.py <ruta-al-csv>
+
+Requiere variables de entorno (mismas que .env):
+    DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 """
 
 import csv
+import os
+import sys
 import re
 from datetime import datetime
+
 import pymysql
+from decouple import config
 
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '1095827105',
-    'database': 'streaming_business',
-    'charset': 'utf8mb4'
+    'host': config('DB_HOST', default='localhost'),
+    'user': config('DB_USER'),
+    'password': config('DB_PASSWORD'),
+    'database': config('DB_NAME'),
+    'port': int(config('DB_PORT', default='3306')),
+    'charset': 'utf8mb4',
 }
 
 # Column mapping (0-indexed from csv)
@@ -106,8 +120,16 @@ def run():
     cur.execute("SELECT id, name FROM platforms")
     platform_map = {name: pid for pid, name in cur.fetchall()}
 
-    # ── Read CSV ──
-    with open('/home/robinson/Downloads/DESDE JULIO PLATAFORMAS 2025 - CORREOS A.csv', encoding='utf-8') as f:
+    # ── Read CSV path from CLI arg ──
+    csv_path = sys.argv[1] if len(sys.argv) > 1 else None
+    if not csv_path:
+        print("Uso: python migrar_csv.py <ruta-al-csv>", file=sys.stderr)
+        sys.exit(1)
+    if not os.path.exists(csv_path):
+        print(f"Archivo no encontrado: {csv_path}", file=sys.stderr)
+        sys.exit(1)
+
+    with open(csv_path, encoding='utf-8') as f:
         reader = csv.reader(f)
         rows = list(reader)
 
