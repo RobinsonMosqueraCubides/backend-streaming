@@ -1,7 +1,6 @@
+from datetime import timedelta
 from django.db import models
 from django.core.validators import RegexValidator
-from django.core.exceptions import ValidationError
-from datetime import timedelta
 
 
 class Screen(models.Model):
@@ -46,6 +45,8 @@ class Screen(models.Model):
         default=Status.DISPONIBLE,
     )
     fecha_inicio = models.DateField("fecha inicio", blank=True, null=True)
+    fecha_cobro = models.DateField("fecha cobro", blank=True, null=True)
+    fecha_corte = models.DateField("fecha corte", blank=True, null=True)
     observaciones = models.TextField("observaciones", blank=True, null=True)
     notes = models.TextField("notas", blank=True, null=True)
     created_at = models.DateTimeField("creado", auto_now_add=True)
@@ -58,20 +59,15 @@ class Screen(models.Model):
         verbose_name_plural = "pantallas"
         ordering = ["-created_at"]
 
+    def save(self, *args, **kwargs):
+        """Auto-calcula fecha_cobro y fecha_corte si no están definidas."""
+        if self.fecha_inicio:
+            if not self.fecha_cobro:
+                self.fecha_cobro = self.fecha_inicio + timedelta(days=29)
+            if not self.fecha_corte:
+                self.fecha_corte = self.fecha_inicio + timedelta(days=30)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         acc = self.account_id or "?"
         return f"Pantalla #{self.id} (Cuenta #{acc}) — {self.get_status_display()}"
-
-    @property
-    def fecha_cobro(self):
-        """Fecha de cobro: 29 días después del inicio."""
-        if self.fecha_inicio:
-            return self.fecha_inicio + timedelta(days=29)
-        return None
-
-    @property
-    def fecha_corte(self):
-        """Fecha de corte: 30 días después del inicio."""
-        if self.fecha_inicio:
-            return self.fecha_inicio + timedelta(days=30)
-        return None

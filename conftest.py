@@ -86,7 +86,9 @@ def django_db_setup(django_db_blocker):
                     credentials VARCHAR(255),
                     status VARCHAR(10) DEFAULT 'activo',
                     purchase_price DECIMAL(10,2),
+                    precio_venta DECIMAL(10,2),
                     fecha_compra DATE,
+                    fecha_pago DATE,
                     observaciones TEXT,
                     notes TEXT,
                     is_active BOOL DEFAULT 1,
@@ -103,9 +105,12 @@ def django_db_setup(django_db_blocker):
                     account_id INTEGER NOT NULL,
                     customer_id INTEGER,
                     pin VARCHAR(4) NOT NULL,
+                    precio_venta DECIMAL(10,2),
                     profile_name VARCHAR(255),
                     status VARCHAR(10) DEFAULT 'disponible',
                     fecha_inicio DATE,
+                    fecha_cobro DATE,
+                    fecha_corte DATE,
                     observaciones TEXT,
                     notes TEXT,
                     created_at DATETIME,
@@ -120,9 +125,12 @@ def django_db_setup(django_db_blocker):
                     account_id INTEGER NOT NULL,
                     customer_id INTEGER NOT NULL,
                     contraseña VARCHAR(255) NOT NULL,
+                    precio_venta DECIMAL(10,2),
                     profile_name VARCHAR(255),
                     status VARCHAR(10) DEFAULT 'activo',
                     fecha_inicio DATE,
+                    fecha_cobro DATE,
+                    fecha_corte DATE,
                     observaciones TEXT,
                     created_at DATETIME,
                     updated_at DATETIME,
@@ -214,8 +222,8 @@ def account(db, platform, provider, email_obj):
     with connection.cursor() as cur:
         cur.execute(
             "INSERT INTO accounts (email_id, platform_id, provider_id, max_screens, "
-            "credentials, status, fecha_compra, is_active) "
-            "VALUES (%s, %s, %s, 4, 'user:pass', 'activo', '2026-05-01', 1)",
+            "credentials, status, fecha_compra, fecha_pago, is_active) "
+            "VALUES (%s, %s, %s, 4, 'user:pass', 'activo', '2026-05-01', '2026-05-29', 1)",
             [email_obj, platform, provider],
         )
         cur.execute("SELECT last_insert_rowid()")
@@ -266,8 +274,8 @@ def screen(db, account, customer):
     from django.db import connection
     with connection.cursor() as cur:
         cur.execute(
-            "INSERT INTO screens (account_id, customer_id, pin, profile_name, status, fecha_inicio) "
-            "VALUES (%s, %s, '1234', 'Perfil 1', 'activo', '2026-05-01')",
+            "INSERT INTO screens (account_id, customer_id, pin, profile_name, status, fecha_inicio, fecha_cobro, fecha_corte) "
+            "VALUES (%s, %s, '1234', 'Perfil 1', 'activo', '2026-05-01', '2026-05-30', '2026-05-31')",
             [account, customer],
         )
         cur.execute("SELECT last_insert_rowid()")
@@ -293,8 +301,8 @@ def customer_account(db, account, customer):
     from django.db import connection
     with connection.cursor() as cur:
         cur.execute(
-            "INSERT INTO customer_accounts (account_id, customer_id, contraseña, profile_name, status, fecha_inicio) "
-            "VALUES (%s, %s, 'secret123', 'Perfil Principal', 'activo', '2026-05-01')",
+            "INSERT INTO customer_accounts (account_id, customer_id, contraseña, profile_name, status, fecha_inicio, fecha_cobro, fecha_corte) "
+            "VALUES (%s, %s, 'secret123', 'Perfil Principal', 'activo', '2026-05-01', '2026-05-30', '2026-05-31')",
             [account, customer],
         )
         cur.execute("SELECT last_insert_rowid()")

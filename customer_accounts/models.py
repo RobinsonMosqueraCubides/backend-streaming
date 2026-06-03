@@ -1,5 +1,5 @@
-from django.db import models
 from datetime import timedelta
+from django.db import models
 
 
 class CustomerAccount(models.Model):
@@ -37,6 +37,8 @@ class CustomerAccount(models.Model):
         default=Status.ACTIVO,
     )
     fecha_inicio = models.DateField("fecha inicio", blank=True, null=True)
+    fecha_cobro = models.DateField("fecha cobro", blank=True, null=True)
+    fecha_corte = models.DateField("fecha corte", blank=True, null=True)
     observaciones = models.TextField("observaciones", blank=True, null=True)
     created_at = models.DateTimeField("creado", auto_now_add=True)
     updated_at = models.DateTimeField("actualizado", auto_now=True)
@@ -48,21 +50,16 @@ class CustomerAccount(models.Model):
         verbose_name_plural = "cuentas de clientes"
         ordering = ["-created_at"]
 
+    def save(self, *args, **kwargs):
+        """Auto-calcula fecha_cobro y fecha_corte si no están definidas."""
+        if self.fecha_inicio:
+            if not self.fecha_cobro:
+                self.fecha_cobro = self.fecha_inicio + timedelta(days=29)
+            if not self.fecha_corte:
+                self.fecha_corte = self.fecha_inicio + timedelta(days=30)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         acc = self.account_id or "?"
         cli = self.customer.name if self.customer else "?"
         return f"Cuenta #{acc} → {cli} ({self.get_status_display()})"
-
-    @property
-    def fecha_cobro(self):
-        """Fecha de cobro: 29 días después del inicio."""
-        if self.fecha_inicio:
-            return self.fecha_inicio + timedelta(days=29)
-        return None
-
-    @property
-    def fecha_corte(self):
-        """Fecha de corte: 30 días después del inicio."""
-        if self.fecha_inicio:
-            return self.fecha_inicio + timedelta(days=30)
-        return None

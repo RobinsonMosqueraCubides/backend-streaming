@@ -80,8 +80,7 @@ CREATE TABLE accounts (
     purchase_price DECIMAL(10,2),
     precio_venta DECIMAL(10,2),
     fecha_compra DATE,
-    -- fecha_pago se calcula sola: compra + 28 días
-    fecha_pago DATE GENERATED ALWAYS AS (fecha_compra + INTERVAL 28 DAY) STORED,
+    fecha_pago DATE,                          -- calculado al crear (compra+28d), editable
     observaciones TEXT,
     notes TEXT,
     is_active BOOLEAN DEFAULT TRUE,
@@ -105,9 +104,8 @@ CREATE TABLE screens (
     profile_name VARCHAR(255),
     status ENUM('disponible', 'activo', 'por_vencer', 'vencida', 'caida') DEFAULT 'disponible',
     fecha_inicio DATE,
-    -- Se calculan solas desde fecha_inicio
-    fecha_cobro DATE GENERATED ALWAYS AS (fecha_inicio + INTERVAL 29 DAY) STORED,
-    fecha_corte DATE GENERATED ALWAYS AS (fecha_inicio + INTERVAL 30 DAY) STORED,
+    fecha_cobro DATE,                          -- calculado al crear (inicio+29d), editable
+    fecha_corte DATE,                          -- calculado al crear (inicio+30d), editable
     observaciones TEXT,
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -130,8 +128,8 @@ CREATE TABLE customer_accounts (
     profile_name VARCHAR(255),
     status ENUM('activo', 'por_vencer', 'vencida', 'caida') DEFAULT 'activo',
     fecha_inicio DATE,
-    fecha_cobro DATE GENERATED ALWAYS AS (fecha_inicio + INTERVAL 29 DAY) STORED,
-    fecha_corte DATE GENERATED ALWAYS AS (fecha_inicio + INTERVAL 30 DAY) STORED,
+    fecha_cobro DATE,                          -- calculado al crear (inicio+29d), editable
+    fecha_corte DATE,                          -- calculado al crear (inicio+30d), editable
     observaciones TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

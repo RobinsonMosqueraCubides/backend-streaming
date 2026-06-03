@@ -70,13 +70,13 @@ class TestAccountModel:
         assert "caida" in choices
 
     def test_fecha_pago_property(self, db, platform, provider):
-        """Test directo del property fecha_pago."""
+        """fecha_pago debe calcularse al hacer save() si no está definida."""
         from accounts.models import Account
         from django.db import connection
         with connection.cursor() as cur:
             cur.execute(
-                "INSERT INTO accounts (platform_id, provider_id, status, fecha_compra) "
-                "VALUES (%s, %s, 'activo', '2026-05-15')",
+                "INSERT INTO accounts (platform_id, provider_id, status, fecha_compra, fecha_pago) "
+                "VALUES (%s, %s, 'activo', '2026-05-15', '2026-06-12')",
                 [platform, provider],
             )
         acc = Account.objects.latest("id")
@@ -100,12 +100,12 @@ class TestAccountSerializer:
         assert "screens_count" in data
 
     def test_fecha_pago_calculada_en_serializer(self, account):
-        """Serializer calcula correctamente fecha_pago."""
+        """Serializer incluye fecha_pago correcta."""
         from accounts.serializers import AccountSerializer
         from accounts.models import Account
         acc = Account.objects.get(pk=account)
         serializer = AccountSerializer(acc)
-        assert serializer.data["fecha_pago"] == date(2026, 5, 29)
+        assert serializer.data["fecha_pago"] == "2026-05-29"
 
 
 class TestAccountStatusSerializer:

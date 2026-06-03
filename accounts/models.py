@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.db import models
 from django.core.exceptions import ValidationError
 from providers.models import Platform, Provider
@@ -54,6 +55,7 @@ class Account(models.Model):
         "precio venta", max_digits=10, decimal_places=2, blank=True, null=True
     )
     fecha_compra = models.DateField("fecha compra", blank=True, null=True)
+    fecha_pago = models.DateField("fecha pago", blank=True, null=True)
     observaciones = models.TextField("observaciones", blank=True, null=True)
     notes = models.TextField("notas", blank=True, null=True)
     is_active = models.BooleanField("activo", default=True)
@@ -71,13 +73,11 @@ class Account(models.Model):
         plat = self.platform.name if self.platform else "?"
         return f"{plat} #{self.id} — {self.get_status_display()}"
 
-    @property
-    def fecha_pago(self):
-        """Fecha de pago calculada: 28 días después de la compra."""
-        if self.fecha_compra:
-            from datetime import timedelta
-            return self.fecha_compra + timedelta(days=28)
-        return None
+    def save(self, *args, **kwargs):
+        """Auto-calcula fecha_pago si no está definida."""
+        if self.fecha_compra and not self.fecha_pago:
+            self.fecha_pago = self.fecha_compra + timedelta(days=28)
+        super().save(*args, **kwargs)
 
     @property
     def screens_count(self):
