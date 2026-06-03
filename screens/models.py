@@ -33,6 +33,9 @@ class Screen(models.Model):
         max_length=4,
         validators=[RegexValidator(r"^\d{4}$", "El PIN debe tener exactamente 4 dígitos.")],
     )
+    precio_venta = models.DecimalField(
+        "precio venta", max_digits=10, decimal_places=2, blank=True, null=True
+    )
     profile_name = models.CharField(
         "nombre perfil", max_length=255, blank=True, null=True
     )

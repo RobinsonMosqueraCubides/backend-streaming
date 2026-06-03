@@ -24,6 +24,9 @@ class CustomerAccount(models.Model):
         related_name="customer_accounts",
     )
     contraseña = models.CharField("contraseña", max_length=255)
+    precio_venta = models.DecimalField(
+        "precio venta", max_digits=10, decimal_places=2, blank=True, null=True
+    )
     profile_name = models.CharField(
         "nombre perfil", max_length=255, blank=True, null=True
     )

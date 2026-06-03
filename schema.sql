@@ -78,6 +78,7 @@ CREATE TABLE accounts (
     credentials VARCHAR(255),
     status ENUM('activo', 'por_vencer', 'vencida', 'caida') DEFAULT 'activo',
     purchase_price DECIMAL(10,2),
+    precio_venta DECIMAL(10,2),
     fecha_compra DATE,
     -- fecha_pago se calcula sola: compra + 28 días
     fecha_pago DATE GENERATED ALWAYS AS (fecha_compra + INTERVAL 28 DAY) STORED,
@@ -100,6 +101,7 @@ CREATE TABLE screens (
     account_id INT NOT NULL,
     customer_id INT,                          -- quién la compró
     pin CHAR(4) NOT NULL,
+    precio_venta DECIMAL(10,2),
     profile_name VARCHAR(255),
     status ENUM('disponible', 'activo', 'por_vencer', 'vencida', 'caida') DEFAULT 'disponible',
     fecha_inicio DATE,
@@ -124,6 +126,7 @@ CREATE TABLE customer_accounts (
     account_id INT NOT NULL,                  -- la cuenta del inventario que se vendió
     customer_id INT NOT NULL,                 -- a quién se le vendió
     contraseña VARCHAR(255) NOT NULL,         -- en vez de PIN
+    precio_venta DECIMAL(10,2),
     profile_name VARCHAR(255),
     status ENUM('activo', 'por_vencer', 'vencida', 'caida') DEFAULT 'activo',
     fecha_inicio DATE,

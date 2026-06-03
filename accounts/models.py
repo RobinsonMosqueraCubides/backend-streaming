@@ -50,6 +50,9 @@ class Account(models.Model):
     purchase_price = models.DecimalField(
         "precio compra", max_digits=10, decimal_places=2, blank=True, null=True
     )
+    precio_venta = models.DecimalField(
+        "precio venta", max_digits=10, decimal_places=2, blank=True, null=True
+    )
     fecha_compra = models.DateField("fecha compra", blank=True, null=True)
     observaciones = models.TextField("observaciones", blank=True, null=True)
     notes = models.TextField("notas", blank=True, null=True)
