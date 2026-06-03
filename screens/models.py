@@ -1,6 +1,7 @@
 from datetime import timedelta
 from django.db import models
 from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 
 
 class Screen(models.Model):
@@ -59,8 +60,18 @@ class Screen(models.Model):
         verbose_name_plural = "pantallas"
         ordering = ["-created_at"]
 
+    def clean(self):
+        """Valida que no se exceda la capacidad de la cuenta."""
+        if self.account_id and not self.pk:
+            used = self.account.screens.count()
+            if used >= self.account.max_screens:
+                raise ValidationError(
+                    f"La cuenta ya tiene {used} pantallas (máx: {self.account.max_screens})."
+                )
+
     def save(self, *args, **kwargs):
-        """Auto-calcula fecha_cobro y fecha_corte si no están definidas."""
+        """Auto-calcula fechas y valida capacidad."""
+        self.clean()
         if self.fecha_inicio:
             if not self.fecha_cobro:
                 self.fecha_cobro = self.fecha_inicio + timedelta(days=29)
