@@ -1,0 +1,217 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Modelo de Negocio v3 — Streaming</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f8fafc;
+    --fg: #172033;
+    --muted: #5b6475;
+    --line: #64748b;
+    --neutral: #e2e8f0;
+    --input: #bfdbfe;
+    --process: #c7d2fe;
+    --storage: #99f6e4;
+    --external: #fde68a;
+    --risk: #fecaca;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a;
+      --fg: #e5e7eb;
+      --muted: #a3adbd;
+      --line: #94a3b8;
+      --neutral: #334155;
+      --input: #1d4ed8;
+      --process: #4338ca;
+      --storage: #0f766e;
+      --external: #92400e;
+      --risk: #991b1b;
+    }
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 14px/1.4 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  main { max-width: 1000px; margin: 32px auto; padding: 0 20px; }
+  svg { width: 100%; height: auto; display: block; }
+  .title { font-size: 20px; font-weight: 650; fill: var(--fg); text-anchor: middle; }
+  .subtitle { font-size: 13px; fill: var(--muted); text-anchor: middle; }
+  .entity-name { font-size: 14px; font-weight: 700; fill: #fff; text-anchor: middle; }
+  .attr { font-size: 11px; fill: var(--fg); }
+  .attr-key { font-weight: 600; fill: var(--muted); }
+  .rel-label { font-size: 11px; font-weight: 600; fill: var(--fg); }
+  .card { font-size: 10px; font-weight: 700; fill: var(--muted); }
+  .edge { stroke: var(--line); stroke-width: 2; fill: none; }
+  .legend-text { font-size: 11px; fill: var(--muted); }
+</style>
+<main>
+<svg viewBox="0 0 960 780" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M0 0L10 5L0 10Z" fill="var(--line)" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="480" y="28" class="title">Modelo de Negocio v3 — Streaming</text>
+  <text x="480" y="46" class="subtitle">Estado actual DB · 7 tablas · 103 tests</text>
+
+  <!-- ============================================================ -->
+  <!-- EDGES -->
+  <!-- ============================================================ -->
+
+  <!-- PROVEEDOR ──tiene──> CORREO -->
+  <path d="M220 85 L340 85" class="edge" marker-end="url(#arrow)" />
+  <rect x="242" y="74" width="56" height="18" rx="4" fill="var(--bg)" opacity="0.85" />
+  <text x="270" y="86" class="rel-label" text-anchor="middle">tiene</text>
+  <text x="225" y="78" class="card" text-anchor="end">1</text>
+  <text x="343" y="78" class="card" text-anchor="start">0..N</text>
+
+  <!-- PROVEEDOR ──vende──> CUENTA -->
+  <path d="M125 145 L310 280" class="edge" marker-end="url(#arrow)" />
+  <rect x="170" y="195" width="60" height="18" rx="4" fill="var(--bg)" opacity="0.85" />
+  <text x="200" y="208" class="rel-label" text-anchor="middle">vende</text>
+  <text x="115" y="148" class="card" text-anchor="end">1</text>
+  <text x="315" y="275" class="card">N</text>
+
+  <!-- CORREO ──asociado a──> CUENTA -->
+  <path d="M440 145 L440 220" class="edge" marker-end="url(#arrow)" />
+  <rect x="390" y="160" width="100" height="18" rx="4" fill="var(--bg)" opacity="0.85" />
+  <text x="440" y="173" class="rel-label" text-anchor="middle">asociado a</text>
+  <text x="430" y="148" class="card" text-anchor="end">1</text>
+  <text x="443" y="220" class="card" text-anchor="start">0..N</text>
+
+  <!-- PLATAFORMA ──categoriza──> CUENTA -->
+  <path d="M785 145 L600 280" class="edge" marker-end="url(#arrow)" />
+  <rect x="660" y="190" width="88" height="18" rx="4" fill="var(--bg)" opacity="0.85" />
+  <text x="704" y="203" class="rel-label" text-anchor="middle">categoriza</text>
+  <text x="795" y="148" class="card" text-anchor="start">1</text>
+  <text x="595" y="278" class="card" text-anchor="end">N</text>
+
+  <!-- CUENTA ──contiene──> PANTALLA -->
+  <path d="M350 350 L210 450" class="edge" marker-end="url(#arrow)" />
+  <rect x="238" y="382" width="80" height="18" rx="4" fill="var(--bg)" opacity="0.85" />
+  <text x="278" y="395" class="rel-label" text-anchor="middle">contiene</text>
+  <text x="343" y="350" class="card" text-anchor="end">1</text>
+  <text x="203" y="450" class="card" text-anchor="end">1..5</text>
+
+  <!-- CUENTA ──vendida como──> CUENTA_CLIENTE -->
+  <path d="M570 350 L700 450" class="edge" marker-end="url(#arrow)" />
+  <rect x="596" y="382" width="96" height="18" rx="4" fill="var(--bg)" opacity="0.85" />
+  <text x="644" y="395" class="rel-label" text-anchor="middle">vendida como</text>
+  <text x="577" y="350" class="card" text-anchor="start">1</text>
+  <text x="707" y="450" class="card" text-anchor="start">0..N</text>
+
+  <!-- PANTALLA ──comprada por──> CLIENTE -->
+  <path d="M210 580 L310 675" class="edge" marker-end="url(#arrow)" />
+  <rect x="224" y="618" width="96" height="18" rx="4" fill="var(--bg)" opacity="0.85" />
+  <text x="272" y="631" class="rel-label" text-anchor="middle">comprada por</text>
+  <text x="203" y="583" class="card" text-anchor="end">0..N</text>
+  <text x="315" y="673" class="card">1</text>
+
+  <!-- CUENTA_CLIENTE ──comprada por──> CLIENTE -->
+  <path d="M700 580 L600 675" class="edge" marker-end="url(#arrow)" />
+  <rect x="610" y="618" width="96" height="18" rx="4" fill="var(--bg)" opacity="0.85" />
+  <text x="658" y="631" class="rel-label" text-anchor="middle">comprada por</text>
+  <text x="707" y="583" class="card" text-anchor="start">0..N</text>
+  <text x="595" y="673" class="card" text-anchor="end">1</text>
+
+
+  <!-- ============================================================ -->
+  <!-- ENTITIES -->
+  <!-- ============================================================ -->
+
+  <!-- ========= PROVEEDOR ========= -->
+  <rect x="30" y="55" width="190" height="90" rx="8" class="node" fill="var(--external)" />
+  <rect x="30" y="55" width="190" height="26" rx="8" fill="#d97706" />
+  <rect x="30" y="73" width="190" height="8" fill="#d97706" />
+  <text x="125" y="72" class="entity-name">PROVEEDOR</text>
+  <text x="45" y="94" class="attr"><tspan class="attr-key">id</tspan> : INT (PK)</text>
+  <text x="45" y="111" class="attr"><tspan class="attr-key">nombre</tspan> : VARCHAR</text>
+  <text x="45" y="128" class="attr"><tspan class="attr-key">teléfono</tspan> : VARCHAR(30)</text>
+
+  <!-- ========= CORREO ========= -->
+  <rect x="340" y="55" width="200" height="100" rx="8" class="node" fill="var(--input)" />
+  <rect x="340" y="55" width="200" height="26" rx="8" fill="#2563eb" />
+  <rect x="340" y="73" width="200" height="8" fill="#2563eb" />
+  <text x="440" y="72" class="entity-name">CORREO</text>
+  <text x="355" y="94" class="attr"><tspan class="attr-key">email</tspan> : VARCHAR (PK)</text>
+  <text x="355" y="111" class="attr"><tspan class="attr-key">contraseña</tspan> : VARCHAR</text>
+  <text x="355" y="128" class="attr"><tspan class="attr-key">teléfono</tspan> : VARCHAR(30)</text>
+  <text x="355" y="145" class="attr"><tspan class="attr-key">provider_id</tspan> → PROVEEDOR.id</text>
+
+  <!-- ========= PLATAFORMA ========= -->
+  <rect x="690" y="55" width="190" height="90" rx="8" class="node" fill="var(--storage)" />
+  <rect x="690" y="55" width="190" height="26" rx="8" fill="#0d9488" />
+  <rect x="690" y="73" width="190" height="8" fill="#0d9488" />
+  <text x="785" y="72" class="entity-name">PLATAFORMA</text>
+  <text x="705" y="97" class="attr"><tspan class="attr-key">id</tspan> : INT (PK)</text>
+  <text x="705" y="114" class="attr"><tspan class="attr-key">nombre</tspan> : VARCHAR(50)</text>
+  <text x="705" y="131" class="attr" font-style="italic" fill="var(--muted)">(Netflix, Disney+, HBO Max...)</text>
+
+  <!-- ========= CUENTA (central) ========= -->
+  <rect x="280" y="225" width="320" height="145" rx="10" class="node" fill="var(--process)" />
+  <rect x="280" y="225" width="320" height="28" rx="10" fill="#4338ca" />
+  <rect x="280" y="245" width="320" height="8" fill="#4338ca" />
+  <text x="440" y="243" class="entity-name">CUENTA <tspan font-size="11" fill="#c7d2fe">(inventario)</tspan></text>
+  <text x="295" y="265" class="attr"><tspan class="attr-key">id</tspan> : INT (PK)</text>
+  <text x="295" y="282" class="attr"><tspan class="attr-key">plataforma</tspan> → PLATAFORMA.id</text>
+  <text x="295" y="299" class="attr"><tspan class="attr-key">proveedor</tspan> → PROVEEDOR.id · <tspan class="attr-key">correo</tspan> → CORREO.id</text>
+  <text x="295" y="316" class="attr"><tspan class="attr-key">capacidad</tspan> : TINYINT (1-5) · <tspan class="attr-key">status</tspan> : ENUM</text>
+  <text x="295" y="333" class="attr"><tspan class="attr-key">credenciales</tspan> : VARCHAR</text>
+  <text x="295" y="350" class="attr"><tspan class="attr-key">precio_compra</tspan> : DECIMAL · <tspan class="attr-key">precio_venta</tspan> : DECIMAL</text>
+  <text x="295" y="367" class="attr"><tspan class="attr-key">fecha_compra</tspan> : DATE · <tspan class="attr-key">fecha_pago</tspan> (compra+28d)</text>
+
+  <!-- ========= PANTALLA ========= -->
+  <rect x="40" y="455" width="320" height="125" rx="8" class="node" fill="var(--neutral)" />
+  <rect x="40" y="455" width="320" height="26" rx="8" fill="#64748b" />
+  <rect x="40" y="473" width="320" height="8" fill="#64748b" />
+  <text x="200" y="472" class="entity-name">PANTALLA <tspan font-size="11" fill="#cbd5e1">(perfil)</tspan></text>
+  <text x="55" y="494" class="attr"><tspan class="attr-key">id</tspan> : INT (PK) · <tspan class="attr-key">cuenta</tspan> → CUENTA.id</text>
+  <text x="55" y="511" class="attr"><tspan class="attr-key">cliente</tspan> → CLIENTE.id · <tspan class="attr-key">PIN</tspan> : CHAR(4)</text>
+  <text x="55" y="528" class="attr"><tspan class="attr-key">precio_venta</tspan> : DECIMAL</text>
+  <text x="55" y="545" class="attr"><tspan class="attr-key">status</tspan> : ENUM(disponible, activo, por_vencer, vencida, caida)</text>
+  <text x="55" y="562" class="attr"><tspan class="attr-key">fecha_inicio</tspan> : DATE</text>
+  <text x="55" y="577" class="attr"><tspan class="attr-key">fecha_cobro</tspan> (inicio+29d) · <tspan class="attr-key">fecha_corte</tspan> (inicio+30d)</text>
+
+  <!-- ========= CUENTA_CLIENTE ========= -->
+  <rect x="560" y="455" width="340" height="125" rx="8" class="node" fill="var(--neutral)" />
+  <rect x="560" y="455" width="340" height="26" rx="8" fill="#64748b" />
+  <rect x="560" y="473" width="340" height="8" fill="#64748b" />
+  <text x="730" y="472" class="entity-name">CUENTA_CLIENTE <tspan font-size="11" fill="#cbd5e1">(cuenta vendida)</tspan></text>
+  <text x="575" y="494" class="attr"><tspan class="attr-key">id</tspan> : INT (PK) · <tspan class="attr-key">cuenta</tspan> → CUENTA.id</text>
+  <text x="575" y="511" class="attr"><tspan class="attr-key">cliente</tspan> → CLIENTE.id · <tspan class="attr-key">contraseña</tspan> : VARCHAR</text>
+  <text x="575" y="528" class="attr"><tspan class="attr-key">precio_venta</tspan> : DECIMAL</text>
+  <text x="575" y="545" class="attr"><tspan class="attr-key">status</tspan> : ENUM(activo, por_vencer, vencida, caida)</text>
+  <text x="575" y="562" class="attr"><tspan class="attr-key">fecha_inicio</tspan> : DATE</text>
+  <text x="575" y="577" class="attr"><tspan class="attr-key">fecha_cobro</tspan> (inicio+29d) · <tspan class="attr-key">fecha_corte</tspan> (inicio+30d)</text>
+
+  <!-- ========= CLIENTE ========= -->
+  <rect x="310" y="680" width="280" height="80" rx="8" class="node" fill="var(--external)" />
+  <rect x="310" y="680" width="280" height="26" rx="8" fill="#d97706" />
+  <rect x="310" y="698" width="280" height="8" fill="#d97706" />
+  <text x="450" y="697" class="entity-name">CLIENTE</text>
+  <text x="325" y="719" class="attr"><tspan class="attr-key">id</tspan> : INT (PK)</text>
+  <text x="325" y="736" class="attr"><tspan class="attr-key">nombre</tspan> : VARCHAR · <tspan class="attr-key">teléfono</tspan> : VARCHAR(30)</text>
+
+  <!-- ============================================================ -->
+  <!-- FOOTER / LEGEND -->
+  <!-- ============================================================ -->
+  <rect x="30" y="765" width="12" height="12" rx="2" fill="var(--external)" stroke="var(--line)" stroke-width="1" />
+  <text x="48" y="776" class="legend-text">Actor externo</text>
+  <rect x="160" y="765" width="12" height="12" rx="2" fill="var(--process)" stroke="var(--line)" stroke-width="1" />
+  <text x="178" y="776" class="legend-text">Inventario</text>
+  <rect x="285" y="765" width="12" height="12" rx="2" fill="var(--neutral)" stroke="var(--line)" stroke-width="1" />
+  <text x="303" y="776" class="legend-text">Producto vendido</text>
+  <rect x="440" y="765" width="12" height="12" rx="2" fill="var(--storage)" stroke="var(--line)" stroke-width="1" />
+  <text x="458" y="776" class="legend-text">Catálogo</text>
+  <rect x="555" y="765" width="12" height="12" rx="2" fill="var(--input)" stroke="var(--line)" stroke-width="1" />
+  <text x="573" y="776" class="legend-text">Recurso</text>
+
+</svg>
+</main>
+</html>
