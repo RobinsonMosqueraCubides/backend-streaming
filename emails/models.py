@@ -5,12 +5,11 @@ from providers.models import Provider
 class Email(models.Model):
     """Correo Gmail que el negocio controla."""
 
-    email = models.EmailField(max_length=255, unique=True)
+    email = models.EmailField(max_length=255)
     password = models.CharField("contraseña", max_length=255, blank=True, null=True)
     verification_email = models.EmailField(
         "correo verificación", max_length=255, blank=True, null=True
     )
-    phone_number = models.CharField("teléfono", max_length=30, blank=True, null=True)
     last_login = models.DateField("último ingreso", blank=True, null=True)
     requires_validation = models.BooleanField(
         "pide validación", blank=True, null=True

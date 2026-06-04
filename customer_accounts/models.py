@@ -23,6 +23,14 @@ class CustomerAccount(models.Model):
         verbose_name="cliente",
         related_name="customer_accounts",
     )
+    order = models.ForeignKey(
+        "orders.Order",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name="orden",
+        related_name="customer_accounts",
+    )
     contraseña = models.CharField("contraseña", max_length=255)
     precio_venta = models.DecimalField(
         "precio venta", max_digits=10, decimal_places=2, blank=True, null=True

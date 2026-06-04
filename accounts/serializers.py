@@ -4,7 +4,6 @@ from .models import Account
 
 class AccountSerializer(serializers.ModelSerializer):
     platform_name = serializers.CharField(source="platform.name", read_only=True)
-    provider_name = serializers.CharField(source="provider.name", read_only=True)
     email_address = serializers.EmailField(source="email.email", read_only=True)
     screens_count = serializers.SerializerMethodField()
     available_screens = serializers.SerializerMethodField()

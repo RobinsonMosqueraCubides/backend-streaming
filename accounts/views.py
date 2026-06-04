@@ -13,14 +13,13 @@ class AccountFilter(FilterSet):
         fields = {
             "status": ["exact"],
             "platform": ["exact"],
-            "provider": ["exact"],
             "is_active": ["exact"],
             "fecha_compra": ["exact", "gte", "lte"],
         }
 
 
 class AccountViewSet(viewsets.ModelViewSet):
-    queryset = Account.objects.select_related("platform", "provider", "email").all()
+    queryset = Account.objects.select_related("platform", "email").all()
     serializer_class = AccountSerializer
     filterset_class = AccountFilter
     search_fields = ["credentials", "observaciones", "notes"]

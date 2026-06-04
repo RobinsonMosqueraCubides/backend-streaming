@@ -25,6 +25,7 @@ class Provider(models.Model):
     contact = models.CharField("contacto", max_length=255, blank=True, null=True)
     phone = models.CharField("teléfono", max_length=30, blank=True, null=True)
     notes = models.TextField("notas", blank=True, null=True)
+    observaciones = models.TextField("observaciones", blank=True, null=True)
     created_at = models.DateTimeField("creado", auto_now_add=True)
 
     class Meta:

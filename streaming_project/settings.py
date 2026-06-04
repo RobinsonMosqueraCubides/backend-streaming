@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'accounts',
     'screens',
     'customer_accounts',
+    'orders',
     'dashboard',
     'status_log',
 ]

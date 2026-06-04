@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django.db import models
 from django.core.exceptions import ValidationError
-from providers.models import Platform, Provider
+from providers.models import Platform
 from emails.models import Email
 
 
@@ -28,14 +28,6 @@ class Account(models.Model):
         verbose_name="plataforma",
         related_name="accounts",
     )
-    provider = models.ForeignKey(
-        Provider,
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        verbose_name="proveedor",
-        related_name="accounts",
-    )
     max_screens = models.PositiveSmallIntegerField(
         "capacidad pantallas", default=1
     )
@@ -51,11 +43,9 @@ class Account(models.Model):
     purchase_price = models.DecimalField(
         "precio compra", max_digits=10, decimal_places=2, blank=True, null=True
     )
-    precio_venta = models.DecimalField(
-        "precio venta", max_digits=10, decimal_places=2, blank=True, null=True
-    )
     fecha_compra = models.DateField("fecha compra", blank=True, null=True)
     fecha_pago = models.DateField("fecha pago", blank=True, null=True)
+    fecha_corte = models.DateField("fecha corte", blank=True, null=True)
     observaciones = models.TextField("observaciones", blank=True, null=True)
     notes = models.TextField("notas", blank=True, null=True)
     is_active = models.BooleanField("activo", default=True)
@@ -77,6 +67,8 @@ class Account(models.Model):
         """Auto-calcula fecha_pago si no está definida."""
         if self.fecha_compra and not self.fecha_pago:
             self.fecha_pago = self.fecha_compra + timedelta(days=28)
+        if self.fecha_compra and not self.fecha_corte:
+            self.fecha_corte = self.fecha_compra + timedelta(days=30)
         super().save(*args, **kwargs)
 
     @property

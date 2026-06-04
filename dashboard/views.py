@@ -1,102 +1,195 @@
-from django.db.models import Count
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.db.models import Sum, Count
+from accounts.models import Account
+from screens.models import Screen
+from customer_accounts.models import CustomerAccount
+from orders.models import Order
 
 
 @api_view(["GET"])
-def dashboard_vencidas(request):
-    """Cuentas y pantallas por vencer o vencidas."""
-    from accounts.models import Account
-    from screens.models import Screen
-    from customer_accounts.models import CustomerAccount
-    from datetime import date
+def resumen_financiero(request):
+    """Resumen financiero general."""
+    # Ingresos
+    ingresos_orders = Order.objects.aggregate(total=Sum("total"))["total"] or 0
+    ingresos_screens = Screen.objects.exclude(status="disponible").aggregate(
+        total=Sum("precio_venta")
+    )["total"] or 0
+    ingresos_cuentas = CustomerAccount.objects.aggregate(
+        total=Sum("precio_venta")
+    )["total"] or 0
 
-    hoy = date.today()
+    # Egresos
+    egresos = Account.objects.aggregate(total=Sum("purchase_price"))["total"] or 0
 
-    # Cuentas vencidas o por vencer
-    cuentas = Account.objects.filter(
-        status__in=["por_vencer", "vencida"]
-    ).select_related("platform", "provider").values(
-        "id", "platform__name", "status", "fecha_compra"
-    ).order_by("status", "fecha_compra")
+    # Balance
+    ingresos_totales = ingresos_screens + ingresos_cuentas
+    balance = ingresos_totales - egresos
 
-    # Pantallas vencidas o por vencer
-    pantallas = Screen.objects.filter(
-        status__in=["por_vencer", "vencida"]
-    ).select_related("account", "customer").values(
-        "id", "pin", "status", "fecha_inicio",
-        "account__id", "customer__name"
-    ).order_by("status", "fecha_inicio")
-
-    # Cuentas de clientes vencidas o por vencer
-    customer_accounts = CustomerAccount.objects.filter(
-        status__in=["por_vencer", "vencida"]
-    ).select_related("account", "customer").values(
-        "id", "status", "fecha_inicio",
-        "account__id", "customer__name"
-    ).order_by("status", "fecha_inicio")
+    # Conteos
+    cuentas_activas = Account.objects.filter(is_active=True).count()
+    pantallas_vendidas = Screen.objects.exclude(status="disponible").count()
+    pantallas_disponibles = Screen.objects.filter(status="disponible").count()
+    ordenes_activas = Order.objects.filter(status="activo").count()
 
     return Response({
-        "fecha_consulta": hoy,
-        "total_vencidas": len(cuentas) + len(pantallas) + len(customer_accounts),
-        "cuentas_por_vencer": [
-            c for c in cuentas if c["status"] == "por_vencer"
-        ],
-        "cuentas_vencidas": [
-            c for c in cuentas if c["status"] == "vencida"
-        ],
-        "pantallas_por_vencer": [
-            p for p in pantallas if p["status"] == "por_vencer"
-        ],
-        "pantallas_vencidas": [
-            p for p in pantallas if p["status"] == "vencida"
-        ],
-        "customer_accounts_por_vencer": [
-            ca for ca in customer_accounts if ca["status"] == "por_vencer"
-        ],
-        "customer_accounts_vencidas": [
-            ca for ca in customer_accounts if ca["status"] == "vencida"
-        ],
+        "ingresos": {
+            "orders_total": float(ingresos_orders),
+            "screens_total": float(ingresos_screens),
+            "customer_accounts_total": float(ingresos_cuentas),
+            "total": float(ingresos_totales),
+        },
+        "egresos": float(egresos),
+        "balance": float(balance),
+        "conteos": {
+            "cuentas_activas": cuentas_activas,
+            "pantallas_vendidas": pantallas_vendidas,
+            "pantallas_disponibles": pantallas_disponibles,
+            "ordenes_activas": ordenes_activas,
+        },
     })
 
 
 @api_view(["GET"])
-def dashboard_summary(request):
-    """Resumen general del negocio."""
-    from accounts.models import Account
-    from screens.models import Screen
-    from customer_accounts.models import CustomerAccount
-    from providers.models import Platform
-
-    # Cuentas agrupadas por plataforma y estado
-    accounts_by_platform = (
-        Account.objects.values("platform__name", "status")
-        .annotate(total=Count("id"))
-        .order_by("platform__name", "status")
+def ingresos_por_plataforma(request):
+    """Ingresos totalizados por plataforma."""
+    screens = (
+        Screen.objects.exclude(status="disponible")
+        .values("account__platform__name")
+        .annotate(total=Sum("precio_venta"), count=Count("id"))
+        .order_by("-total")
+    )
+    cuentas = (
+        CustomerAccount.objects.values("account__platform__name")
+        .annotate(total=Sum("precio_venta"), count=Count("id"))
+        .order_by("-total")
     )
 
-    # Pantallas agrupadas por estado
-    screens_by_status = (
-        Screen.objects.values("status")
-        .annotate(total=Count("id"))
-        .order_by("status")
+    # Merge
+    result = {}
+    for s in screens:
+        name = s["account__platform__name"] or "Sin plataforma"
+        result[name] = {"screens": float(s["total"] or 0), "cuentas": 0, "count_screens": s["count"]}
+    for c in cuentas:
+        name = c["account__platform__name"] or "Sin plataforma"
+        if name not in result:
+            result[name] = {"screens": 0, "cuentas": 0, "count_screens": 0}
+        result[name]["cuentas"] = float(c["total"] or 0)
+        result[name]["count_cuentas"] = c["count"]
+
+    data = []
+    for name, vals in result.items():
+        vals["plataforma"] = name
+        vals["total"] = vals["screens"] + vals["cuentas"]
+        data.append(vals)
+    data.sort(key=lambda x: x["total"], reverse=True)
+
+    return Response(data)
+
+
+@api_view(["GET"])
+def ingresos_por_proveedor(request):
+    """Ingresos totalizados por proveedor (via email → provider)."""
+    screens = (
+        Screen.objects.exclude(status="disponible")
+        .values("account__email__provider__name")
+        .annotate(total=Sum("precio_venta"), count=Count("id"))
+        .order_by("-total")
+    )
+    cuentas = (
+        CustomerAccount.objects.values("account__email__provider__name")
+        .annotate(total=Sum("precio_venta"), count=Count("id"))
+        .order_by("-total")
     )
 
-    # Cuentas de clientes agrupadas por estado
-    customer_accounts_by_status = (
-        CustomerAccount.objects.values("status")
-        .annotate(total=Count("id"))
-        .order_by("status")
+    result = {}
+    for s in screens:
+        name = s["account__email__provider__name"] or "Sin proveedor"
+        result[name] = {"screens": float(s["total"] or 0), "cuentas": 0, "count_screens": s["count"]}
+    for c in cuentas:
+        name = c["account__email__provider__name"] or "Sin proveedor"
+        if name not in result:
+            result[name] = {"screens": 0, "cuentas": 0, "count_screens": 0}
+        result[name]["cuentas"] = float(c["total"] or 0)
+        result[name]["count_cuentas"] = c["count"]
+
+    data = []
+    for name, vals in result.items():
+        vals["proveedor"] = name
+        vals["total"] = vals["screens"] + vals["cuentas"]
+        data.append(vals)
+    data.sort(key=lambda x: x["total"], reverse=True)
+
+    return Response(data)
+
+
+@api_view(["GET"])
+def ingresos_por_cliente(request):
+    """Ingresos totalizados por cliente."""
+    screens = (
+        Screen.objects.exclude(status="disponible")
+        .values("customer__name")
+        .annotate(total=Sum("precio_venta"), count=Count("id"))
+        .order_by("-total")
+    )
+    cuentas = (
+        CustomerAccount.objects.values("customer__name")
+        .annotate(total=Sum("precio_venta"), count=Count("id"))
+        .order_by("-total")
     )
 
-    platforms = Platform.objects.values_list("name", flat=True)
+    result = {}
+    for s in screens:
+        name = s["customer__name"] or "Sin cliente"
+        result[name] = {"screens": float(s["total"] or 0), "cuentas": 0, "count_screens": s["count"]}
+    for c in cuentas:
+        name = c["customer__name"] or "Sin cliente"
+        if name not in result:
+            result[name] = {"screens": 0, "cuentas": 0, "count_screens": 0}
+        result[name]["cuentas"] = float(c["total"] or 0)
+        result[name]["count_cuentas"] = c["count"]
 
-    return Response({
-        "total_accounts": Account.objects.count(),
-        "total_screens": Screen.objects.count(),
-        "total_customer_accounts": CustomerAccount.objects.count(),
-        "accounts_by_platform": list(accounts_by_platform),
-        "screens_by_status": list(screens_by_status),
-        "customer_accounts_by_status": list(customer_accounts_by_status),
-        "platforms": list(platforms),
-    })
+    data = []
+    for name, vals in result.items():
+        vals["cliente"] = name
+        vals["total"] = vals["screens"] + vals["cuentas"]
+        data.append(vals)
+    data.sort(key=lambda x: x["total"], reverse=True)
+
+    return Response(data)
+
+
+@api_view(["GET"])
+def egresos_por_proveedor(request):
+    """Egresos (compras) totalizados por proveedor."""
+    egresos = (
+        Account.objects.values("email__provider__name")
+        .annotate(total=Sum("purchase_price"), count=Count("id"))
+        .order_by("-total")
+    )
+    data = []
+    for e in egresos:
+        data.append({
+            "proveedor": e["email__provider__name"] or "Sin proveedor",
+            "total": float(e["total"] or 0),
+            "count": e["count"],
+        })
+    return Response(data)
+
+
+@api_view(["GET"])
+def egresos_por_plataforma(request):
+    """Egresos (compras) totalizados por plataforma."""
+    egresos = (
+        Account.objects.values("platform__name")
+        .annotate(total=Sum("purchase_price"), count=Count("id"))
+        .order_by("-total")
+    )
+    data = []
+    for e in egresos:
+        data.append({
+            "plataforma": e["platform__name"] or "Sin plataforma",
+            "total": float(e["total"] or 0),
+            "count": e["count"],
+        })
+    return Response(data)

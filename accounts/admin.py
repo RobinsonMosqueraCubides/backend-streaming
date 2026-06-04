@@ -16,7 +16,7 @@ class AccountAdmin(admin.ModelAdmin):
     list_display = [
         "id", "platform", "email", "status", "max_screens", "is_active"
     ]
-    list_filter = ["status", "platform", "provider", "is_active"]
+    list_filter = ["status", "platform", "is_active"]
     search_fields = ["credentials", "observaciones"]
     inlines = [ScreenInline]
 

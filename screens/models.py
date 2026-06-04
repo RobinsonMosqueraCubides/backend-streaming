@@ -28,6 +28,14 @@ class Screen(models.Model):
         verbose_name="cliente",
         related_name="screens",
     )
+    order = models.ForeignKey(
+        "orders.Order",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name="orden",
+        related_name="screens",
+    )
     pin = models.CharField(
         "PIN",
         max_length=4,
