@@ -214,6 +214,7 @@ def vencimientos_cliente(request):
 
         data.append({
             "orden_id": order.id,
+            "customer_id": order.customer_id,
             "cliente": order.customer.name if order.customer else "Sin cliente",
             "telefono": order.customer.phone if order.customer else None,
             "fecha_cobro": order.fecha_cobro.isoformat() if order.fecha_cobro else None,
@@ -441,3 +442,30 @@ def clientes_inactivos(request):
 
     data.sort(key=lambda x: x["dias_sin_compra"] or 0, reverse=True)
     return Response(data)
+
+
+@api_view(["GET"])
+def clientes_antiguos(request):
+    """IDs de clientes con al menos 1 año de relación continua (status != vencida)."""
+    from datetime import timedelta
+    from django.utils import timezone
+
+    fecha_limite = timezone.now().date() - timedelta(days=365)
+
+    screen_customers = set(
+        Screen.objects.filter(
+            fecha_inicio__lte=fecha_limite,
+        ).exclude(status="vencida")
+        .values_list("customer_id", flat=True)
+    )
+    ca_customers = set(
+        CustomerAccount.objects.filter(
+            fecha_inicio__lte=fecha_limite,
+        ).exclude(status="vencida")
+        .values_list("customer_id", flat=True)
+    )
+
+    customer_ids = screen_customers | ca_customers
+    customer_ids.discard(None)
+
+    return Response(sorted(customer_ids))

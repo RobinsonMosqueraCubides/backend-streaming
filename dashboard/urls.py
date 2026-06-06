@@ -12,4 +12,5 @@ urlpatterns = [
     path("cliente/<int:customer_id>/", views.resumen_cliente, name="resumen-cliente"),
     path("inventario/", views.inventario, name="dashboard-inventario"),
     path("clientes-inactivos/", views.clientes_inactivos, name="clientes-inactivos"),
+    path("clientes-antiguos/", views.clientes_antiguos, name="clientes-antiguos"),
 ]
