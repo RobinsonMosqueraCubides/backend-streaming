@@ -2,3 +2,11 @@
 [2026-06-02 20:48:28,410] WARNING django.server "GET /api/dashboard/summary/https://www.thunderclient.com/welcome HTTP/1.1" 404 22617
 [2026-06-03 22:00:20,299] WARNING django.request Not Found: /api/resumen/
 [2026-06-03 22:00:20,300] WARNING django.server "GET /api/resumen/ HTTP/1.1" 404 24315
+[2026-06-04 20:58:58,233] WARNING django.request Not Found: /
+[2026-06-04 20:58:58,234] WARNING django.server "GET / HTTP/1.1" 404 3688
+[2026-06-04 20:59:00,823] WARNING django.request Not Found: /
+[2026-06-04 20:59:00,824] WARNING django.server "GET / HTTP/1.1" 404 3688
+[2026-06-04 21:00:19,019] WARNING django.request Not Found: /
+[2026-06-04 21:00:19,019] WARNING django.server "GET / HTTP/1.1" 404 3688
+[2026-06-04 21:40:27,003] WARNING django.request Not Found: /
+[2026-06-04 21:40:27,003] WARNING django.server "GET / HTTP/1.1" 404 3688

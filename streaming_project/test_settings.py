@@ -24,6 +24,8 @@ INSTALLED_APPS = [
     "accounts",
     "screens",
     "customer_accounts",
+    "orders",
+    "status_log",
     "dashboard",
 ]
 

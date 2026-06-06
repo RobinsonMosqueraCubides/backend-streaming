@@ -13,3 +13,8 @@ class CustomerAccountSerializer(serializers.ModelSerializer):
 
 class CustomerAccountStatusSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=CustomerAccount.Status.choices)
+
+
+class BulkCustomerAccountStatusSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.IntegerField(min_value=1))
+    status = serializers.ChoiceField(choices=CustomerAccount.Status.choices)

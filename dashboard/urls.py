@@ -8,4 +8,8 @@ urlpatterns = [
     path("ingresos/cliente/", views.ingresos_por_cliente, name="ingresos-cliente"),
     path("egresos/proveedor/", views.egresos_por_proveedor, name="egresos-proveedor"),
     path("egresos/plataforma/", views.egresos_por_plataforma, name="egresos-plataforma"),
+    path("vencimientos/", views.vencimientos_cliente, name="vencimientos-cliente"),
+    path("cliente/<int:customer_id>/", views.resumen_cliente, name="resumen-cliente"),
+    path("inventario/", views.inventario, name="dashboard-inventario"),
+    path("clientes-inactivos/", views.clientes_inactivos, name="clientes-inactivos"),
 ]

@@ -13,3 +13,8 @@ class ScreenSerializer(serializers.ModelSerializer):
 
 class ScreenStatusSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=Screen.Status.choices)
+
+
+class BulkScreenStatusSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.IntegerField(min_value=1))
+    status = serializers.ChoiceField(choices=Screen.Status.choices)
