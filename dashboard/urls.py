@@ -15,4 +15,7 @@ urlpatterns = [
     path("clientes-antiguos/", views.clientes_antiguos, name="clientes-antiguos"),
     path("cobros/", views.cobros_pendientes, name="cobros-pendientes"),
     path("cobros/marcar/", views.marcar_cobro, name="cobros-marcar"),
+    path("pagos/actualizar-pago/", views.actualizar_pago, name="pagos-actualizar"),
+    path("pagos/fecha-personalizada/", views.fecha_personalizada, name="pagos-fecha"),
+    path("pagos/corte/", views.corte_pago, name="pagos-corte"),
 ]

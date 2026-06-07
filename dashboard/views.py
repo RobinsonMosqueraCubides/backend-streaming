@@ -617,3 +617,123 @@ def marcar_cobro(request):
             "corte": estado.corte_enviado,
         },
     })
+
+
+# ─── Actualizar Pagos ─────────────────────────────────────────
+
+
+@api_view(["POST"])
+def actualizar_pago(request):
+    """Suma 30 días a la fecha_cobro de la orden y propaga a items."""
+    from datetime import timedelta
+
+    order_id = request.data.get("order_id")
+    if not order_id:
+        return Response({"error": "order_id es requerido"}, status=400)
+
+    try:
+        order = Order.objects.get(pk=order_id)
+    except Order.DoesNotExist:
+        return Response({"error": "Orden no encontrada"}, status=404)
+
+    if not order.fecha_cobro:
+        return Response({"error": "La orden no tiene fecha de cobro"}, status=400)
+
+    nueva_fecha = order.fecha_cobro + timedelta(days=30)
+    order.fecha_cobro = nueva_fecha
+    order.save(update_fields=["fecha_cobro", "updated_at"])
+
+    # Propagar a screens y customer_accounts de esta orden
+    Screen.objects.filter(order=order).update(fecha_cobro=nueva_fecha)
+    CustomerAccount.objects.filter(order=order).update(fecha_cobro=nueva_fecha)
+
+    return Response({
+        "order_id": order_id,
+        "fecha_cobro_anterior": order.fecha_cobro.isoformat(),
+        "nueva_fecha_cobro": nueva_fecha.isoformat(),
+    })
+
+
+@api_view(["POST"])
+def fecha_personalizada(request):
+    """Establece una fecha de cobro personalizada para la orden."""
+    from datetime import date
+    from django.utils import timezone
+
+    order_id = request.data.get("order_id")
+    nueva_fecha_str = request.data.get("nueva_fecha")
+
+    if not order_id or not nueva_fecha_str:
+        return Response({"error": "order_id y nueva_fecha son requeridos"}, status=400)
+
+    try:
+        nueva_fecha = date.fromisoformat(nueva_fecha_str)
+    except ValueError:
+        return Response({"error": "Formato de fecha inválido (YYYY-MM-DD)"}, status=400)
+
+    if nueva_fecha <= timezone.now().date():
+        return Response({"error": "La fecha debe ser posterior a hoy"}, status=400)
+
+    try:
+        order = Order.objects.get(pk=order_id)
+    except Order.DoesNotExist:
+        return Response({"error": "Orden no encontrada"}, status=404)
+
+    order.fecha_cobro = nueva_fecha
+    order.save(update_fields=["fecha_cobro", "updated_at"])
+
+    # Propagar a items
+    Screen.objects.filter(order=order).update(fecha_cobro=nueva_fecha)
+    CustomerAccount.objects.filter(order=order).update(fecha_cobro=nueva_fecha)
+
+    return Response({
+        "order_id": order_id,
+        "nueva_fecha_cobro": nueva_fecha.isoformat(),
+    })
+
+
+@api_view(["POST"])
+def corte_pago(request):
+    """Pone la orden y sus items en estado vencida, liberando recursos."""
+    order_id = request.data.get("order_id")
+    if not order_id:
+        return Response({"error": "order_id es requerido"}, status=400)
+
+    try:
+        order = Order.objects.get(pk=order_id)
+    except Order.DoesNotExist:
+        return Response({"error": "Orden no encontrada"}, status=404)
+
+    # Cambiar status de la orden
+    order.status = "vencida"
+    order.save(update_fields=["status", "updated_at"])
+
+    # Cambiar status de screens
+    screens = Screen.objects.filter(order=order)
+    screens.update(status="vencida")
+
+    # Cambiar status de customer_accounts
+    customer_accounts = CustomerAccount.objects.filter(order=order)
+    customer_accounts.update(status="vencida")
+
+    # Verificar accounts afectadas — liberar si no tienen otros items activos
+    account_ids = set(
+        list(screens.values_list("account_id", flat=True)) +
+        list(customer_accounts.values_list("account_id", flat=True))
+    )
+
+    from accounts.models import Account
+    for account_id in account_ids:
+        otros_activos = (
+            Screen.objects.filter(account_id=account_id).exclude(status__in=["disponible", "vencida", "caida"]).exists()
+            or CustomerAccount.objects.filter(account_id=account_id).exclude(status__in=["vencida", "caida"]).exists()
+        )
+        if not otros_activos:
+            Account.objects.filter(id=account_id).update(status="vencida")
+
+    return Response({
+        "order_id": order_id,
+        "status": "vencida",
+        "screens_afectados": screens.count(),
+        "cuentas_afectadas": customer_accounts.count(),
+    })
