@@ -399,22 +399,60 @@ def clientes_inactivos(request):
 
         ultima_pantalla = (
             Screen.objects.filter(customer=customer)
+            .select_related("account__platform")
             .order_by("-created_at")
             .first()
         )
         ultima_cuenta = (
             CustomerAccount.objects.filter(customer=customer)
+            .select_related("account__platform")
             .order_by("-created_at")
             .first()
         )
 
         ultima_fecha = None
+        ultima_plataforma = None
         if ultima_pantalla and ultima_cuenta:
-            ultima_fecha = max(ultima_pantalla.created_at.date(), ultima_cuenta.created_at.date())
+            if ultima_pantalla.created_at.date() >= ultima_cuenta.created_at.date():
+                ultima_fecha = ultima_pantalla.created_at.date()
+                ultima_plataforma = (
+                    ultima_pantalla.account.platform.name
+                    if ultima_pantalla.account and ultima_pantalla.account.platform
+                    else None
+                )
+            else:
+                ultima_fecha = ultima_cuenta.created_at.date()
+                ultima_plataforma = (
+                    ultima_cuenta.account.platform.name
+                    if ultima_cuenta.account and ultima_cuenta.account.platform
+                    else None
+                )
         elif ultima_pantalla:
             ultima_fecha = ultima_pantalla.created_at.date()
+            ultima_plataforma = (
+                ultima_pantalla.account.platform.name
+                if ultima_pantalla.account and ultima_pantalla.account.platform
+                else None
+            )
         elif ultima_cuenta:
             ultima_fecha = ultima_cuenta.created_at.date()
+            ultima_plataforma = (
+                ultima_cuenta.account.platform.name
+                if ultima_cuenta.account and ultima_cuenta.account.platform
+                else None
+            )
+
+        # Plataformas compradas (todas, no solo la última)
+        plataformas_screens = set(
+            Screen.objects.filter(customer=customer)
+            .exclude(status="disponible")
+            .values_list("account__platform__name", flat=True)
+        )
+        plataformas_cuentas = set(
+            CustomerAccount.objects.filter(customer=customer)
+            .values_list("account__platform__name", flat=True)
+        )
+        plataformas = sorted((plataformas_screens | plataformas_cuentas) - {None})
 
         total_compras = (
             Screen.objects.filter(customer=customer).exclude(status="disponible").count()
@@ -438,6 +476,8 @@ def clientes_inactivos(request):
             "dias_sin_compra": dias_sin_compra,
             "total_compras": total_compras,
             "total_gastado": total_gastado,
+            "plataformas": plataformas,
+            "ultima_plataforma": ultima_plataforma,
         })
 
     data.sort(key=lambda x: x["dias_sin_compra"] or 0, reverse=True)
