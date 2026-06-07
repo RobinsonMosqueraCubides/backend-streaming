@@ -13,4 +13,6 @@ urlpatterns = [
     path("inventario/", views.inventario, name="dashboard-inventario"),
     path("clientes-inactivos/", views.clientes_inactivos, name="clientes-inactivos"),
     path("clientes-antiguos/", views.clientes_antiguos, name="clientes-antiguos"),
+    path("cobros/", views.cobros_pendientes, name="cobros-pendientes"),
+    path("cobros/marcar/", views.marcar_cobro, name="cobros-marcar"),
 ]

@@ -85,7 +85,7 @@ CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
     total DECIMAL(10,2),
-    status ENUM('activo', 'por_vencer', 'vencida', 'caida') DEFAULT 'activo',
+    status ENUM('activo', 'por_cobrar', 'por_vencer', 'por_cortar', 'vencida', 'caida') DEFAULT 'activo',
     fecha_inicio DATE,
     fecha_cobro DATE,
     fecha_corte DATE,
@@ -130,7 +130,7 @@ CREATE TABLE screens (
     pin CHAR(4) DEFAULT NULL,
     precio_venta DECIMAL(10,2),
     profile_name VARCHAR(255),
-    status ENUM('disponible', 'activo', 'por_vencer', 'vencida', 'caida') DEFAULT 'disponible',
+    status ENUM('disponible', 'activo', 'por_cobrar', 'por_vencer', 'por_cortar', 'vencida', 'caida') DEFAULT 'disponible',
     fecha_inicio DATE,
     fecha_cobro DATE,                          -- calculado al crear (inicio+29d), editable
     fecha_corte DATE,                          -- calculado al crear (inicio+30d), editable
@@ -156,7 +156,7 @@ CREATE TABLE customer_accounts (
     contraseña VARCHAR(255) NOT NULL,         -- en vez de PIN
     precio_venta DECIMAL(10,2),
     profile_name VARCHAR(255),
-    status ENUM('activo', 'por_vencer', 'vencida', 'caida') DEFAULT 'activo',
+    status ENUM('activo', 'por_cobrar', 'por_vencer', 'por_cortar', 'vencida', 'caida') DEFAULT 'activo',
     fecha_inicio DATE,
     fecha_cobro DATE,                          -- calculado al crear (inicio+29d), editable
     fecha_corte DATE,                          -- calculado al crear (inicio+30d), editable
@@ -166,6 +166,20 @@ CREATE TABLE customer_accounts (
     FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
+);
+
+-- ============================================================
+-- 9. COBRO_ESTADO (tracking de envíos de WhatsApp)
+-- ============================================================
+CREATE TABLE cobro_estado (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL UNIQUE,
+    aviso_enviado BOOLEAN DEFAULT FALSE,
+    notificacion_enviada BOOLEAN DEFAULT FALSE,
+    corte_enviado BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
 -- ============================================================

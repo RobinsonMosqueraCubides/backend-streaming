@@ -6,7 +6,9 @@ class Order(models.Model):
 
     class Status(models.TextChoices):
         ACTIVO = "activo", "Activo"
+        POR_COBRAR = "por_cobrar", "Por cobrar"
         POR_VENCER = "por_vencer", "Por vencer"
+        POR_CORTAR = "por_cortar", "Por cortar"
         VENCIDA = "vencida", "Vencida"
         CAIDA = "caida", "Caída"
 

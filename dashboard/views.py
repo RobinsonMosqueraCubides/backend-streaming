@@ -509,3 +509,111 @@ def clientes_antiguos(request):
     customer_ids.discard(None)
 
     return Response(sorted(customer_ids))
+
+
+@api_view(["GET"])
+def cobros_pendientes(request):
+    """Órdenes con status por_cobrar o por_cortar — candidatos a cobro/notificación."""
+    from cobros.models import CobroEstado
+
+    orders = (
+        Order.objects
+        .filter(status__in=["por_cobrar", "por_cortar"])
+        .select_related("customer", "cobro_estado")
+        .prefetch_related(
+            "screens__account__platform",
+            "customer_accounts__account__platform",
+        )
+        .order_by("customer__name")
+    )
+
+    data = []
+    for order in orders:
+        plataformas = set()
+        for screen in order.screens.all():
+            if screen.account and screen.account.platform:
+                plataformas.add(screen.account.platform.name)
+        for ca in order.customer_accounts.all():
+            if ca.account and ca.account.platform:
+                plataformas.add(ca.account.platform.name)
+
+        # Estado de envío
+        try:
+            estado = order.cobro_estado
+            estado_envio = {
+                "aviso": estado.aviso_enviado,
+                "notificacion": estado.notificacion_enviada,
+                "corte": estado.corte_enviado,
+            }
+        except CobroEstado.DoesNotExist:
+            estado_envio = {
+                "aviso": False,
+                "notificacion": False,
+                "corte": False,
+            }
+
+        data.append({
+            "orden_id": order.id,
+            "customer_id": order.customer_id,
+            "cliente": order.customer.name if order.customer else "Sin cliente",
+            "telefono": order.customer.phone if order.customer else None,
+            "fecha_cobro": order.fecha_cobro.isoformat() if order.fecha_cobro else None,
+            "fecha_corte": order.fecha_corte.isoformat() if order.fecha_corte else None,
+            "status": order.status,
+            "plataformas": sorted(plataformas),
+            "items_count": order.items_count,
+            "estado_envio": estado_envio,
+        })
+
+    return Response(data)
+
+
+@api_view(["POST"])
+def marcar_cobro(request):
+    """Marca una acción de cobro como enviada (aviso → notificación → corte)."""
+    from cobros.models import CobroEstado
+    from cobros.serializers import CobroMarcarSerializer
+
+    serializer = CobroMarcarSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    order_id = serializer.validated_data["order_id"]
+    accion = serializer.validated_data["accion"]
+
+    try:
+        order = Order.objects.get(pk=order_id)
+    except Order.DoesNotExist:
+        return Response({"error": "Orden no encontrada"}, status=404)
+
+    estado, _ = CobroEstado.objects.get_or_create(order=order)
+
+    # Validar que la acción sea la siguiente en la cadena
+    if accion == "aviso" and estado.aviso_enviado:
+        return Response({"error": "El aviso ya fue enviado"}, status=400)
+    if accion == "notificacion" and not estado.aviso_enviado:
+        return Response({"error": "Debe enviar el aviso primero"}, status=400)
+    if accion == "notificacion" and estado.notificacion_enviada:
+        return Response({"error": "La notificación ya fue enviada"}, status=400)
+    if accion == "corte" and not estado.notificacion_enviada:
+        return Response({"error": "Debe enviar la notificación primero"}, status=400)
+    if accion == "corte" and estado.corte_enviado:
+        return Response({"error": "El corte ya fue enviado"}, status=400)
+
+    # Marcar
+    if accion == "aviso":
+        estado.aviso_enviado = True
+    elif accion == "notificacion":
+        estado.notificacion_enviada = True
+    elif accion == "corte":
+        estado.corte_enviado = True
+
+    estado.save()
+
+    return Response({
+        "order_id": order_id,
+        "accion": accion,
+        "estado_envio": {
+            "aviso": estado.aviso_enviado,
+            "notificacion": estado.notificacion_enviada,
+            "corte": estado.corte_enviado,
+        },
+    })

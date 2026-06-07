@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "customer_accounts",
     "orders",
     "status_log",
+    "cobros",
     "dashboard",
 ]
 
