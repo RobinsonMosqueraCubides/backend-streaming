@@ -71,7 +71,9 @@ class Screen(models.Model):
     def clean(self):
         """Valida que no se exceda la capacidad de la cuenta."""
         if self.account_id and not self.pk:
-            used = self.account.screens.count()
+            if self.account.customer_accounts.exclude(status__in=["vencida", "caida"]).exists():
+                raise ValidationError("La cuenta ya fue vendida completa.")
+            used = self.account.screens.filter(status__in=["activo", "por_vencer"]).count()
             if used >= self.account.max_screens:
                 raise ValidationError(
                     f"La cuenta ya tiene {used} pantallas (máx: {self.account.max_screens})."

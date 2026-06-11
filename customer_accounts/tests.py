@@ -1,5 +1,5 @@
-"""
-tests_customer_accounts.py — Tests para la app customer_accounts.
+﻿"""
+tests_customer_accounts.py â€” Tests para la app customer_accounts.
 Cubre: modelo CustomerAccount (fecha_cobro, fecha_corte), serializers, views.
 """
 import pytest
@@ -12,13 +12,13 @@ class TestCustomerAccountModel:
     """Tests del modelo CustomerAccount."""
 
     def test_fecha_cobro_29_dias(self, customer_account):
-        """fecha_cobro debe ser fecha_inicio + 29 días."""
+        """fecha_cobro debe ser fecha_inicio + 29 dÃ­as."""
         from customer_accounts.models import CustomerAccount
         ca = CustomerAccount.objects.get(pk=customer_account)
         assert ca.fecha_cobro == date(2026, 5, 1) + timedelta(days=29)
 
     def test_fecha_corte_30_dias(self, customer_account):
-        """fecha_corte debe ser fecha_inicio + 30 días."""
+        """fecha_corte debe ser fecha_inicio + 30 dÃ­as."""
         from customer_accounts.models import CustomerAccount
         ca = CustomerAccount.objects.get(pk=customer_account)
         assert ca.fecha_corte == date(2026, 5, 1) + timedelta(days=30)
@@ -29,7 +29,7 @@ class TestCustomerAccountModel:
         from django.db import connection
         with connection.cursor() as cur:
             cur.execute(
-                "INSERT INTO customer_accounts (account_id, customer_id, contraseña) "
+                "INSERT INTO customer_accounts (account_id, customer_id, contrasena) "
                 "VALUES (%s, %s, 'nopass')",
                 [account, customer],
             )
@@ -59,7 +59,7 @@ class TestCustomerAccountModel:
         from django.db import connection
         with connection.cursor() as cur:
             cur.execute(
-                "INSERT INTO customer_accounts (account_id, customer_id, contraseña) "
+                "INSERT INTO customer_accounts (account_id, customer_id, contrasena) "
                 "VALUES (%s, %s, 'newpass')",
                 [account, customer],
             )
@@ -98,7 +98,7 @@ class TestCustomerAccountSerializer:
 
 
 class TestCustomerAccountViewSet:
-    """Tests del ViewSet de CustomerAccount — ruta: /api/customer-accounts/."""
+    """Tests del ViewSet de CustomerAccount â€” ruta: /api/customer-accounts/."""
 
     def test_list_customer_accounts(self, customer_account, api_client):
         """GET /api/customer-accounts/ debe devolver lista."""
@@ -115,7 +115,7 @@ class TestCustomerAccountViewSet:
         data = {
             "account": account,
             "customer": customer,
-            "contraseña": "newsecret",
+            "contrasena": "newsecret",
             "profile_name": "Nuevo Perfil",
             "status": "activo",
             "fecha_inicio": "2026-05-01",
@@ -149,6 +149,6 @@ class TestCustomerAccountViewSet:
         assert response.data["status"] == "vencida"
 
     def test_search_by_profile_name(self, customer_account, api_client):
-        """Búsqueda por profile_name debe funcionar."""
+        """BÃºsqueda por profile_name debe funcionar."""
         response = api_client.get("/api/customer-accounts/", {"search": "Principal"})
         assert response.status_code == 200

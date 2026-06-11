@@ -3,12 +3,15 @@ from .models import CustomerAccount
 
 
 class CustomerAccountSerializer(serializers.ModelSerializer):
-    account_info = serializers.CharField(source="account.__str__", read_only=True)
+    account_info = serializers.SerializerMethodField()
     customer_name = serializers.CharField(source="customer.name", read_only=True)
 
     class Meta:
         model = CustomerAccount
         fields = "__all__"
+
+    def get_account_info(self, obj):
+        return str(obj.account) if obj.account else None
 
 
 class CustomerAccountStatusSerializer(serializers.Serializer):

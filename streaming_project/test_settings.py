@@ -56,11 +56,11 @@ TEMPLATES = [
 ]
 WSGI_APPLICATION = "streaming_project.wsgi.application"
 
-# SQLite in-memory para tests
+# SQLite en archivo para que el setup manual de tablas persista entre conexiones.
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
+        "NAME": BASE_DIR / "test.sqlite3",
     }
 }
 

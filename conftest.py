@@ -1,5 +1,5 @@
-"""
-conftest.py — Fixtures globales para los tests del backend streaming.
+﻿"""
+conftest.py â€” Fixtures globales para los tests del backend streaming.
 
 Estrategia: override de django_db_setup para crear las tablas manualmente
 (visto que todos los modelos tienen managed=False).
@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 
-# ─── Session-scoped DB setup (corre antes que pytest-django toque la DB) ──────
+# â”€â”€â”€ Session-scoped DB setup (corre antes que pytest-django toque la DB) â”€â”€â”€â”€â”€â”€
 
 @pytest.fixture(scope="session")
 def django_db_setup(django_db_blocker):
@@ -23,9 +23,10 @@ def django_db_setup(django_db_blocker):
 
     with django_db_blocker.unblock():
         with connection.cursor() as cur:
-            # Eliminar tablas si ya existían (re-run)
+            # Eliminar tablas si ya existÃ­an (re-run)
             for table in [
-                "screens", "customer_accounts", "accounts",
+                "warranty_claims", "status_log", "cobro_estado",
+                "screens", "customer_accounts", "orders", "accounts",
                 "emails", "customers", "providers", "platforms",
             ]:
                 cur.execute(f"DROP TABLE IF EXISTS {table}")
@@ -43,6 +44,7 @@ def django_db_setup(django_db_blocker):
                     contact VARCHAR(255),
                     phone VARCHAR(30),
                     notes TEXT,
+                    observaciones TEXT,
                     created_at DATETIME
                 )
             """)
@@ -52,7 +54,6 @@ def django_db_setup(django_db_blocker):
                     email VARCHAR(255) UNIQUE NOT NULL,
                     password VARCHAR(255),
                     verification_email VARCHAR(255),
-                    phone_number VARCHAR(30),
                     last_login DATE,
                     requires_validation BOOL,
                     owner_name VARCHAR(255),
@@ -81,22 +82,35 @@ def django_db_setup(django_db_blocker):
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     email_id INTEGER,
                     platform_id INTEGER NOT NULL,
-                    provider_id INTEGER,
                     max_screens INTEGER DEFAULT 1,
                     credentials VARCHAR(255),
                     status VARCHAR(10) DEFAULT 'activo',
                     purchase_price DECIMAL(10,2),
-                    precio_venta DECIMAL(10,2),
                     fecha_compra DATE,
                     fecha_pago DATE,
+                    fecha_corte DATE,
                     observaciones TEXT,
                     notes TEXT,
                     is_active BOOL DEFAULT 1,
                     created_at DATETIME,
                     updated_at DATETIME,
                     FOREIGN KEY (email_id) REFERENCES emails(id),
-                    FOREIGN KEY (platform_id) REFERENCES platforms(id),
-                    FOREIGN KEY (provider_id) REFERENCES providers(id)
+                    FOREIGN KEY (platform_id) REFERENCES platforms(id)
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE orders (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    customer_id INTEGER NOT NULL,
+                    total DECIMAL(10,2),
+                    status VARCHAR(10) DEFAULT 'activo',
+                    fecha_inicio DATE,
+                    fecha_cobro DATE,
+                    fecha_corte DATE,
+                    observaciones TEXT,
+                    created_at DATETIME,
+                    updated_at DATETIME,
+                    FOREIGN KEY (customer_id) REFERENCES customers(id)
                 )
             """)
             cur.execute("""
@@ -104,6 +118,7 @@ def django_db_setup(django_db_blocker):
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     account_id INTEGER NOT NULL,
                     customer_id INTEGER,
+                    order_id INTEGER,
                     pin VARCHAR(4) NOT NULL,
                     precio_venta DECIMAL(10,2),
                     profile_name VARCHAR(255),
@@ -116,7 +131,8 @@ def django_db_setup(django_db_blocker):
                     created_at DATETIME,
                     updated_at DATETIME,
                     FOREIGN KEY (account_id) REFERENCES accounts(id),
-                    FOREIGN KEY (customer_id) REFERENCES customers(id)
+                    FOREIGN KEY (customer_id) REFERENCES customers(id),
+                    FOREIGN KEY (order_id) REFERENCES orders(id)
                 )
             """)
             cur.execute("""
@@ -124,7 +140,8 @@ def django_db_setup(django_db_blocker):
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     account_id INTEGER NOT NULL,
                     customer_id INTEGER NOT NULL,
-                    contraseña VARCHAR(255) NOT NULL,
+                    order_id INTEGER,
+                    contrasena VARCHAR(255) NOT NULL,
                     precio_venta DECIMAL(10,2),
                     profile_name VARCHAR(255),
                     status VARCHAR(10) DEFAULT 'activo',
@@ -135,20 +152,71 @@ def django_db_setup(django_db_blocker):
                     created_at DATETIME,
                     updated_at DATETIME,
                     FOREIGN KEY (account_id) REFERENCES accounts(id),
-                    FOREIGN KEY (customer_id) REFERENCES customers(id)
+                    FOREIGN KEY (customer_id) REFERENCES customers(id),
+                    FOREIGN KEY (order_id) REFERENCES orders(id)
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE cobro_estado (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    order_id INTEGER NOT NULL UNIQUE,
+                    aviso_enviado BOOL DEFAULT 0,
+                    notificacion_enviada BOOL DEFAULT 0,
+                    corte_enviado BOOL DEFAULT 0,
+                    created_at DATETIME,
+                    updated_at DATETIME,
+                    FOREIGN KEY (order_id) REFERENCES orders(id)
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE status_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    model_name VARCHAR(50) NOT NULL,
+                    object_id INTEGER NOT NULL,
+                    old_status VARCHAR(20),
+                    new_status VARCHAR(20) NOT NULL,
+                    changed_at DATETIME
+                )
+            """)
+            cur.execute("""
+                CREATE TABLE warranty_claims (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    order_id INTEGER NOT NULL,
+                    original_screen_id INTEGER,
+                    original_customer_account_id INTEGER,
+                    replacement_screen_id INTEGER,
+                    replacement_customer_account_id INTEGER,
+                    reason TEXT,
+                    status VARCHAR(10) DEFAULT 'abierta',
+                    created_at DATETIME,
+                    resolved_at DATETIME,
+                    FOREIGN KEY (order_id) REFERENCES orders(id),
+                    FOREIGN KEY (original_screen_id) REFERENCES screens(id),
+                    FOREIGN KEY (original_customer_account_id) REFERENCES customer_accounts(id),
+                    FOREIGN KEY (replacement_screen_id) REFERENCES screens(id),
+                    FOREIGN KEY (replacement_customer_account_id) REFERENCES customer_accounts(id)
                 )
             """)
 
 
-# ─── db marker: requerido por pytest-django para permitir acceso a la DB ────────
+# â”€â”€â”€ db marker: requerido por pytest-django para permitir acceso a la DB â”€â”€â”€â”€â”€â”€â”€â”€
 
 @pytest.fixture
-def db(django_db_setup):
-    """Fixture marker de base de datos — habilita acceso a la DB para el test."""
-    pass
+def db(django_db_setup, django_db_blocker):
+    """Limpia datos entre tests sin recrear el esquema manual."""
+    from django.db import connection
+
+    with django_db_blocker.unblock():
+        with connection.cursor() as cur:
+            for table in [
+                "warranty_claims", "status_log", "cobro_estado",
+                "screens", "customer_accounts", "orders", "accounts",
+                "emails", "customers", "providers", "platforms",
+            ]:
+                cur.execute(f"DELETE FROM {table}")
 
 
-# ─── api_client fixture ─────────────────────────────────────────────────────────
+# â”€â”€â”€ api_client fixture â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @pytest.fixture
 def api_client(db):
@@ -157,7 +225,7 @@ def api_client(db):
     return APIClient()
 
 
-# ─── Data fixtures ─────────────────────────────────────────────────────────────
+# â”€â”€â”€ Data fixtures â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @pytest.fixture
 def platform(db):
@@ -221,10 +289,10 @@ def account(db, platform, provider, email_obj):
     from django.db import connection
     with connection.cursor() as cur:
         cur.execute(
-            "INSERT INTO accounts (email_id, platform_id, provider_id, max_screens, "
+            "INSERT INTO accounts (email_id, platform_id, max_screens, "
             "credentials, status, fecha_compra, fecha_pago, is_active) "
-            "VALUES (%s, %s, %s, 4, 'user:pass', 'activo', '2026-05-01', '2026-05-29', 1)",
-            [email_obj, platform, provider],
+            "VALUES (%s, %s, 4, 'user:pass', 'activo', '2026-05-01', '2026-05-29', 1)",
+            [email_obj, platform],
         )
         cur.execute("SELECT last_insert_rowid()")
         return cur.fetchone()[0]
@@ -236,9 +304,9 @@ def account_por_vencer(db, platform, provider):
     from django.db import connection
     with connection.cursor() as cur:
         cur.execute(
-            "INSERT INTO accounts (platform_id, provider_id, max_screens, status, is_active) "
-            "VALUES (%s, %s, 2, 'por_vencer', 1)",
-            [platform, provider],
+            "INSERT INTO accounts (platform_id, max_screens, status, is_active) "
+            "VALUES (%s, 2, 'por_vencer', 1)",
+            [platform],
         )
         cur.execute("SELECT last_insert_rowid()")
         return cur.fetchone()[0]
@@ -301,7 +369,7 @@ def customer_account(db, account, customer):
     from django.db import connection
     with connection.cursor() as cur:
         cur.execute(
-            "INSERT INTO customer_accounts (account_id, customer_id, contraseña, profile_name, status, fecha_inicio, fecha_cobro, fecha_corte) "
+            "INSERT INTO customer_accounts (account_id, customer_id, contrasena, profile_name, status, fecha_inicio, fecha_cobro, fecha_corte) "
             "VALUES (%s, %s, 'secret123', 'Perfil Principal', 'activo', '2026-05-01', '2026-05-30', '2026-05-31')",
             [account, customer],
         )

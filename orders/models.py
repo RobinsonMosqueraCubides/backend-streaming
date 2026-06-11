@@ -56,3 +56,70 @@ class Order(models.Model):
         scr_total = self.screens.aggregate(s=models.Sum("precio_venta"))["s"] or 0
         ca_total = self.customer_accounts.aggregate(s=models.Sum("precio_venta"))["s"] or 0
         return scr_total + ca_total
+
+
+class WarrantyClaim(models.Model):
+    """Garantia o reemplazo aplicado sobre un item vendido."""
+
+    class Status(models.TextChoices):
+        ABIERTA = "abierta", "Abierta"
+        RESUELTA = "resuelta", "Resuelta"
+        RECHAZADA = "rechazada", "Rechazada"
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        verbose_name="orden",
+        related_name="warranty_claims",
+    )
+    original_screen = models.ForeignKey(
+        "screens.Screen",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name="pantalla original",
+        related_name="warranty_claims_original",
+    )
+    original_customer_account = models.ForeignKey(
+        "customer_accounts.CustomerAccount",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name="cuenta cliente original",
+        related_name="warranty_claims_original",
+    )
+    replacement_screen = models.ForeignKey(
+        "screens.Screen",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name="pantalla reemplazo",
+        related_name="warranty_claims_replacement",
+    )
+    replacement_customer_account = models.ForeignKey(
+        "customer_accounts.CustomerAccount",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name="cuenta cliente reemplazo",
+        related_name="warranty_claims_replacement",
+    )
+    reason = models.TextField("motivo", blank=True, null=True)
+    status = models.CharField(
+        "estado",
+        max_length=10,
+        choices=Status.choices,
+        default=Status.ABIERTA,
+    )
+    created_at = models.DateTimeField("creado", auto_now_add=True)
+    resolved_at = models.DateTimeField("resuelto", blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = "warranty_claims"
+        verbose_name = "garantia"
+        verbose_name_plural = "garantias"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Garantia #{self.id} - Orden #{self.order_id}"

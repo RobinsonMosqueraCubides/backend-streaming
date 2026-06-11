@@ -152,7 +152,7 @@ class TestScreenViewSet:
         response = api_client.post("/api/screens/", data, format="json")
         assert response.status_code == 201
 
-    def test_filter_by_status_disponible(self, screen, api_client):
+    def test_filter_by_status_disponible(self, screen_disponible, api_client):
         """Filtro por status disponible debe funcionar."""
         response = api_client.get("/api/screens/", {"status": "disponible"})
         assert response.status_code == 200

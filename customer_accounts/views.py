@@ -1,9 +1,14 @@
+from django_filters.rest_framework import FilterSet
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django_filters.rest_framework import FilterSet
+
 from .models import CustomerAccount
-from .serializers import CustomerAccountSerializer, CustomerAccountStatusSerializer, BulkCustomerAccountStatusSerializer
+from .serializers import (
+    BulkCustomerAccountStatusSerializer,
+    CustomerAccountSerializer,
+    CustomerAccountStatusSerializer,
+)
 
 
 class CustomerAccountFilter(FilterSet):
@@ -21,7 +26,7 @@ class CustomerAccountViewSet(viewsets.ModelViewSet):
     queryset = CustomerAccount.objects.select_related("account", "customer").all()
     serializer_class = CustomerAccountSerializer
     filterset_class = CustomerAccountFilter
-    search_fields = ["contraseña", "profile_name", "observaciones"]
+    search_fields = ["contrasena", "profile_name", "observaciones"]
 
     @action(detail=True, methods=["patch"])
     def change_status(self, request, pk=None):

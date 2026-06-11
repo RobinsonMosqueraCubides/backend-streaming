@@ -1450,3 +1450,7 @@ Traceback (most recent call last):
     ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
 django.db.utils.ProgrammingError: (1146, "Table 'streaming_business.cobro_estado' doesn't exist")
 [2026-06-06 20:02:51,600] ERROR django.server "GET /api/dashboard/cobros/ HTTP/1.1" 500 29305
+[2026-06-10 21:47:09,051] WARNING django.request Not Found: /
+[2026-06-10 21:47:09,052] WARNING django.server "GET / HTTP/1.1" 404 3688
+[2026-06-10 21:47:09,172] WARNING django.request Not Found: /favicon.ico
+[2026-06-10 21:47:09,172] WARNING django.server "GET /favicon.ico HTTP/1.1" 404 3739

@@ -21,10 +21,10 @@ class TestAccountModel:
         acc = Account.objects.get(pk=account)
         assert acc.fecha_pago == date(2026, 5, 1) + timedelta(days=28)
 
-    def test_fecha_pago_none_sin_fecha_compra(self, platform, provider):
+    def test_fecha_pago_none_sin_fecha_compra(self, platform):
         """Si no hay fecha_compra, fecha_pago retorna None."""
         from accounts.models import Account
-        acc = Account(platform_id=platform, provider_id=provider, status="activo")
+        acc = Account(platform_id=platform, status="activo")
         assert acc.fecha_pago is None
 
     def test_screens_count_cuenta_pantallas(self, account, screen, db):
@@ -47,12 +47,11 @@ class TestAccountModel:
         s = str(acc)
         assert "Netflix" in s or "#" in s
 
-    def test_clean_valida_max_screens(self, platform, provider):
+    def test_clean_valida_max_screens(self, platform):
         """clean() debe rechazar max_screens fuera de rango 1-5."""
         from accounts.models import Account
         acc = Account(
             platform_id=platform,
-            provider_id=provider,
             max_screens=10,
             status="activo",
         )
@@ -69,15 +68,15 @@ class TestAccountModel:
         assert "vencida" in choices
         assert "caida" in choices
 
-    def test_fecha_pago_property(self, db, platform, provider):
+    def test_fecha_pago_property(self, db, platform):
         """fecha_pago debe calcularse al hacer save() si no está definida."""
         from accounts.models import Account
         from django.db import connection
         with connection.cursor() as cur:
             cur.execute(
-                "INSERT INTO accounts (platform_id, provider_id, status, fecha_compra, fecha_pago) "
-                "VALUES (%s, %s, 'activo', '2026-05-15', '2026-06-12')",
-                [platform, provider],
+                "INSERT INTO accounts (platform_id, status, fecha_compra, fecha_pago) "
+                "VALUES (%s, 'activo', '2026-05-15', '2026-06-12')",
+                [platform],
             )
         acc = Account.objects.latest("id")
         assert acc.fecha_pago == date(2026, 6, 12)
@@ -141,11 +140,11 @@ class TestAccountViewSet:
         response = api_client.get(f"/api/accounts/{account}/")
         assert response.status_code == 200
 
-    def test_create_account(self, platform, provider, api_client):
+    def test_create_account(self, platform, email_obj, api_client):
         """POST /api/accounts/ debe crear una cuenta."""
         data = {
             "platform": platform,
-            "provider": provider,
+            "email": email_obj,
             "max_screens": 4,
             "credentials": "test:pass",
             "status": "activo",

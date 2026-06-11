@@ -1,10 +1,11 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count
 from accounts.models import Account
 from screens.models import Screen
 from customer_accounts.models import CustomerAccount
 from orders.models import Order
+from orders.models import WarrantyClaim
 
 
 @api_view(["GET"])
@@ -31,6 +32,7 @@ def resumen_financiero(request):
     pantallas_vendidas = Screen.objects.exclude(status="disponible").count()
     pantallas_disponibles = Screen.objects.filter(status="disponible").count()
     ordenes_activas = Order.objects.filter(status="activo").count()
+    garantias_abiertas = WarrantyClaim.objects.filter(status="abierta").count()
 
     return Response({
         "ingresos": {
@@ -46,6 +48,7 @@ def resumen_financiero(request):
             "pantallas_vendidas": pantallas_vendidas,
             "pantallas_disponibles": pantallas_disponibles,
             "ordenes_activas": ordenes_activas,
+            "garantias_abiertas": garantias_abiertas,
         },
     })
 
@@ -333,41 +336,54 @@ def resumen_cliente(request, customer_id):
 
 @api_view(["GET"])
 def inventario(request):
-    """Resumen de inventario de cuentas por plataforma y estado."""
-    from providers.models import Platform
-
-    cuentas = (
-        Account.objects
-        .filter(is_active=True)
-        .values("platform__name")
-        .annotate(
-            total=Count("id"),
-            disponibles=Count("id", filter=Q(screens__status="disponible")),
-            activas=Count("id", filter=Q(status="activo")),
-            por_vencer=Count("id", filter=Q(status="por_vencer")),
-            vencidas=Count("id", filter=Q(status="vencida")),
-            caidas=Count("id", filter=Q(status="caida")),
-        )
-        .order_by("-total")
+    """Resumen de inventario real por plataforma."""
+    accounts = Account.objects.filter(is_active=True).select_related("platform").prefetch_related(
+        "screens",
+        "customer_accounts",
     )
 
-    data = []
-    totales = {"total": 0, "disponibles": 0, "activas": 0, "por_vencer": 0, "vencidas": 0, "caidas": 0}
+    grouped = {}
+    for account in accounts:
+        name = account.platform.name if account.platform else "Sin plataforma"
+        entry = grouped.setdefault(name, {
+            "plataforma": name,
+            "cuentas": 0,
+            "capacidad_pantallas": 0,
+            "pantallas_vendidas": 0,
+            "pantallas_disponibles": 0,
+            "cuentas_completas_vendidas": 0,
+            "activas": 0,
+            "por_vencer": 0,
+            "vencidas": 0,
+            "caidas": 0,
+        })
 
-    for c in cuentas:
-        plataforma = c["platform__name"] or "Sin plataforma"
-        entry = {
-            "plataforma": plataforma,
-            "total": c["total"],
-            "disponibles": c["disponibles"],
-            "activas": c["activas"],
-            "por_vencer": c["por_vencer"],
-            "vencidas": c["vencidas"],
-            "caidas": c["caidas"],
-        }
-        data.append(entry)
-        for key in totales:
-            totales[key] += c[key]
+        active_screens = account.screens.filter(status__in=["activo", "por_vencer"]).count()
+        full_sold = account.customer_accounts.filter(status__in=["activo", "por_vencer"]).exists()
+        available = 0 if full_sold else max(account.max_screens - active_screens, 0)
+
+        entry["cuentas"] += 1
+        entry["capacidad_pantallas"] += account.max_screens
+        entry["pantallas_vendidas"] += active_screens
+        entry["pantallas_disponibles"] += available
+        entry["cuentas_completas_vendidas"] += 1 if full_sold else 0
+        status_key = {
+            "activo": "activas",
+            "por_vencer": "por_vencer",
+            "vencida": "vencidas",
+            "caida": "caidas",
+        }.get(account.status)
+        if status_key:
+            entry[status_key] += 1
+
+    data = sorted(grouped.values(), key=lambda x: x["cuentas"], reverse=True)
+    totales = {
+        "cuentas": sum(item["cuentas"] for item in data),
+        "capacidad_pantallas": sum(item["capacidad_pantallas"] for item in data),
+        "pantallas_vendidas": sum(item["pantallas_vendidas"] for item in data),
+        "pantallas_disponibles": sum(item["pantallas_disponibles"] for item in data),
+        "cuentas_completas_vendidas": sum(item["cuentas_completas_vendidas"] for item in data),
+    }
 
     return Response({"cuentas": data, "totales": totales})
 

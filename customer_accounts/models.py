@@ -1,4 +1,6 @@
 from datetime import timedelta
+
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -9,7 +11,7 @@ class CustomerAccount(models.Model):
         ACTIVO = "activo", "Activo"
         POR_VENCER = "por_vencer", "Por vencer"
         VENCIDA = "vencida", "Vencida"
-        CAIDA = "caida", "Caída"
+        CAIDA = "caida", "Caida"
 
     account = models.ForeignKey(
         "accounts.Account",
@@ -31,7 +33,7 @@ class CustomerAccount(models.Model):
         verbose_name="orden",
         related_name="customer_accounts",
     )
-    contraseña = models.CharField("contraseña", max_length=255)
+    contrasena = models.CharField("contrasena", max_length=255, db_column="contrasena")
     precio_venta = models.DecimalField(
         "precio venta", max_digits=10, decimal_places=2, blank=True, null=True
     )
@@ -58,8 +60,16 @@ class CustomerAccount(models.Model):
         verbose_name_plural = "cuentas de clientes"
         ordering = ["-created_at"]
 
+    def clean(self):
+        if self.account_id and not self.pk:
+            if self.account.screens.filter(status__in=["activo", "por_vencer"]).exists():
+                raise ValidationError("No se puede vender completa una cuenta con pantallas activas.")
+            if self.account.customer_accounts.exclude(status__in=["vencida", "caida"]).exists():
+                raise ValidationError("La cuenta ya fue vendida completa.")
+
     def save(self, *args, **kwargs):
-        """Auto-calcula fecha_cobro y fecha_corte si no están definidas."""
+        """Auto-calcula fecha_cobro y fecha_corte si no estan definidas."""
+        self.clean()
         if self.fecha_inicio:
             if not self.fecha_cobro:
                 self.fecha_cobro = self.fecha_inicio + timedelta(days=29)
@@ -70,4 +80,4 @@ class CustomerAccount(models.Model):
     def __str__(self):
         acc = self.account_id or "?"
         cli = self.customer.name if self.customer else "?"
-        return f"Cuenta #{acc} → {cli} ({self.get_status_display()})"
+        return f"Cuenta #{acc} -> {cli} ({self.get_status_display()})"

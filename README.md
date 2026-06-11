@@ -150,6 +150,8 @@ backend-streaming/
 | `PATCH` | `/api/accounts/:id/change_status/` | Cambiar estado de cuenta |
 | `PATCH` | `/api/screens/:id/change_status/` | Cambiar estado de pantalla |
 | `GET` | `/api/accounts/:id/screens/` | Pantallas de una cuenta |
+| `POST` | `/api/orders/sell/` | Crear venta transaccional con pantallas, cuentas completas o combo |
+| `POST` | `/api/orders/warranty/` | Registrar garantÃ­a/reemplazo de una pantalla o cuenta vendida |
 
 ### Dashboard Financiero
 
