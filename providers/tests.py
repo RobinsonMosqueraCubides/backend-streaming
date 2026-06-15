@@ -136,3 +136,92 @@ class TestPlatformViewSet:
         response = api_client.post("/api/platforms/", data, format="json")
         assert response.status_code == 201
         assert response.data["name"] == "Paramount+"
+
+
+class TestProviderWarrantyClaim:
+    """Tests para reclamos de garantía de proveedores."""
+
+    def test_apply_password_change_warranty(self, account, api_client):
+        """Probar el reclamo de tipo cambio de contraseña."""
+        from accounts.models import Account
+        acc = Account.objects.get(pk=account)
+        assert acc.credentials == "user:pass"
+
+        data = {
+            "account_id": account,
+            "claim_type": "password_change",
+            "fecha_reclamo": "2026-05-15",
+            "new_credentials": "user:newpass123",
+            "notes": "Proveedor cambió contraseña",
+        }
+        response = api_client.post("/api/provider-warranty-claims/", data, format="json")
+        assert response.status_code == 201
+        assert response.data["claim_type"] == "password_change"
+        assert response.data["new_credentials"] == "user:newpass123"
+
+        acc.refresh_from_db()
+        assert acc.credentials == "user:newpass123"
+        assert acc.status == "activo"
+
+    def test_apply_store_credit_warranty(self, account, api_client):
+        """Probar el cálculo del saldo a favor proporcional."""
+        from accounts.models import Account
+        acc = Account.objects.get(pk=account)
+        
+        # Modificar el precio de compra y fecha_corte de la cuenta de prueba para el test
+        acc.purchase_price = 30000.00  # Costo 30000
+        # fecha_compra: 2026-05-01, fecha_corte: 2026-05-31 (ciclo de 30 días)
+        acc.fecha_compra = "2026-05-01"
+        acc.fecha_corte = "2026-05-31"
+        acc.save()
+
+        # Reclamamos el 2026-05-21 (quedan 10 días faltantes)
+        # 10 días de 30 = 1/3. 30000 / 3 = 10000 saldo a favor.
+        data = {
+            "account_id": account,
+            "claim_type": "store_credit",
+            "fecha_reclamo": "2026-05-21",
+            "notes": "Saldo a favor por 10 días restantes",
+        }
+        response = api_client.post("/api/provider-warranty-claims/", data, format="json")
+        assert response.status_code == 201
+        assert response.data["claim_type"] == "store_credit"
+        assert float(response.data["calculated_credit"]) == 10000.00
+        assert response.data["remaining_days"] == 10
+
+        acc.refresh_from_db()
+        assert acc.status == "caida"
+
+    def test_apply_account_replacement_warranty(self, account, api_client):
+        """Probar el reemplazo de cuenta por garantía."""
+        from accounts.models import Account
+        acc = Account.objects.get(pk=account)
+        acc.purchase_price = 30000.00
+        acc.fecha_compra = "2026-05-01"
+        acc.fecha_corte = "2026-05-31"
+        acc.save()
+
+        data = {
+            "account_id": account,
+            "claim_type": "account_replacement",
+            "fecha_reclamo": "2026-05-21",  # Quedan 10 días
+            "new_credentials": "newuser:newpass",
+            "new_email_address": "newemail@gmail.com",
+            "new_email_password": "emailpassword",
+            "notes": "Reemplazo de cuenta completa",
+        }
+        response = api_client.post("/api/provider-warranty-claims/", data, format="json")
+        assert response.status_code == 201
+        assert response.data["claim_type"] == "account_replacement"
+        assert response.data["replacement_account"] is not None
+
+        # Verificar que la original está caída
+        acc.refresh_from_db()
+        assert acc.status == "caida"
+
+        # Verificar la nueva cuenta
+        new_acc = Account.objects.get(pk=response.data["replacement_account"])
+        assert new_acc.credentials == "newuser:newpass"
+        assert new_acc.email.email == "newemail@gmail.com"
+        assert str(new_acc.fecha_corte) == "2026-05-31"  # Dura los 10 días restantes (21 mayo + 10 días)
+        assert float(new_acc.purchase_price) == 0.00

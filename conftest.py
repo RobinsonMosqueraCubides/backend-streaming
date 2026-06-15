@@ -25,7 +25,7 @@ def django_db_setup(django_db_blocker):
         with connection.cursor() as cur:
             # Eliminar tablas si ya existÃ­an (re-run)
             for table in [
-                "warranty_claims", "status_log", "cobro_estado",
+                "provider_warranty_claims", "warranty_claims", "status_log", "cobro_estado",
                 "screens", "customer_accounts", "orders", "accounts",
                 "emails", "customers", "providers", "platforms",
             ]:
@@ -197,6 +197,26 @@ def django_db_setup(django_db_blocker):
                     FOREIGN KEY (replacement_customer_account_id) REFERENCES customer_accounts(id)
                 )
             """)
+            cur.execute("""
+                CREATE TABLE provider_warranty_claims (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    account_id INTEGER NOT NULL,
+                    provider_id INTEGER NOT NULL,
+                    claim_type VARCHAR(20) NOT NULL,
+                    fecha_reclamo DATE NOT NULL,
+                    purchase_price DECIMAL(10,2) NOT NULL,
+                    fecha_corte DATE NOT NULL,
+                    remaining_days INTEGER NOT NULL,
+                    calculated_credit DECIMAL(10,2) DEFAULT 0.00,
+                    new_credentials VARCHAR(255),
+                    replacement_account_id INTEGER,
+                    notes TEXT,
+                    created_at DATETIME,
+                    FOREIGN KEY (account_id) REFERENCES accounts(id),
+                    FOREIGN KEY (provider_id) REFERENCES providers(id),
+                    FOREIGN KEY (replacement_account_id) REFERENCES accounts(id)
+                )
+            """)
 
 
 # â”€â”€â”€ db marker: requerido por pytest-django para permitir acceso a la DB â”€â”€â”€â”€â”€â”€â”€â”€
@@ -209,7 +229,7 @@ def db(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
         with connection.cursor() as cur:
             for table in [
-                "warranty_claims", "status_log", "cobro_estado",
+                "provider_warranty_claims", "warranty_claims", "status_log", "cobro_estado",
                 "screens", "customer_accounts", "orders", "accounts",
                 "emails", "customers", "providers", "platforms",
             ]:

@@ -1,3 +1,5 @@
+from datetime import date
+from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db.models import Sum, Count
@@ -8,20 +10,49 @@ from orders.models import Order
 from orders.models import WarrantyClaim
 
 
+def get_date_filter(request):
+    rango = request.query_params.get("rango")
+    if not rango:
+        return None
+        
+    today = timezone.localtime(timezone.now()).date()
+    
+    if rango == "mes_actual":
+        return today.replace(day=1)
+    elif rango == "ultimos_3_meses":
+        month = today.month - 2
+        year = today.year
+        if month <= 0:
+            month += 12
+            year -= 1
+        return date(year, month, 1)
+    return None
+
+
+
 @api_view(["GET"])
 def resumen_financiero(request):
     """Resumen financiero general."""
+    fecha_desde = get_date_filter(request)
+
+    orders_qs = Order.objects.all()
+    screens_qs = Screen.objects.exclude(status="disponible")
+    customer_accounts_qs = CustomerAccount.objects.all()
+    accounts_qs = Account.objects.all()
+
+    if fecha_desde:
+        orders_qs = orders_qs.filter(fecha_inicio__gte=fecha_desde)
+        screens_qs = screens_qs.filter(fecha_inicio__gte=fecha_desde)
+        customer_accounts_qs = customer_accounts_qs.filter(fecha_inicio__gte=fecha_desde)
+        accounts_qs = accounts_qs.filter(fecha_compra__gte=fecha_desde)
+
     # Ingresos
-    ingresos_orders = Order.objects.aggregate(total=Sum("total"))["total"] or 0
-    ingresos_screens = Screen.objects.exclude(status="disponible").aggregate(
-        total=Sum("precio_venta")
-    )["total"] or 0
-    ingresos_cuentas = CustomerAccount.objects.aggregate(
-        total=Sum("precio_venta")
-    )["total"] or 0
+    ingresos_orders = orders_qs.aggregate(total=Sum("total"))["total"] or 0
+    ingresos_screens = screens_qs.aggregate(total=Sum("precio_venta"))["total"] or 0
+    ingresos_cuentas = customer_accounts_qs.aggregate(total=Sum("precio_venta"))["total"] or 0
 
     # Egresos
-    egresos = Account.objects.aggregate(total=Sum("purchase_price"))["total"] or 0
+    egresos = accounts_qs.aggregate(total=Sum("purchase_price"))["total"] or 0
 
     # Balance
     ingresos_totales = ingresos_screens + ingresos_cuentas
@@ -56,14 +87,23 @@ def resumen_financiero(request):
 @api_view(["GET"])
 def ingresos_por_plataforma(request):
     """Ingresos totalizados por plataforma."""
+    fecha_desde = get_date_filter(request)
+    screens_qs = Screen.objects.exclude(status="disponible")
+    cuentas_qs = CustomerAccount.objects.all()
+
+    if fecha_desde:
+        screens_qs = screens_qs.filter(fecha_inicio__gte=fecha_desde)
+        cuentas_qs = cuentas_qs.filter(fecha_inicio__gte=fecha_desde)
+
     screens = (
-        Screen.objects.exclude(status="disponible")
+        screens_qs
         .values("account__platform__name")
         .annotate(total=Sum("precio_venta"), count=Count("id"))
         .order_by("-total")
     )
     cuentas = (
-        CustomerAccount.objects.values("account__platform__name")
+        cuentas_qs
+        .values("account__platform__name")
         .annotate(total=Sum("precio_venta"), count=Count("id"))
         .order_by("-total")
     )
@@ -93,14 +133,23 @@ def ingresos_por_plataforma(request):
 @api_view(["GET"])
 def ingresos_por_proveedor(request):
     """Ingresos totalizados por proveedor (via email → provider)."""
+    fecha_desde = get_date_filter(request)
+    screens_qs = Screen.objects.exclude(status="disponible")
+    cuentas_qs = CustomerAccount.objects.all()
+
+    if fecha_desde:
+        screens_qs = screens_qs.filter(fecha_inicio__gte=fecha_desde)
+        cuentas_qs = cuentas_qs.filter(fecha_inicio__gte=fecha_desde)
+
     screens = (
-        Screen.objects.exclude(status="disponible")
+        screens_qs
         .values("account__email__provider__name")
         .annotate(total=Sum("precio_venta"), count=Count("id"))
         .order_by("-total")
     )
     cuentas = (
-        CustomerAccount.objects.values("account__email__provider__name")
+        cuentas_qs
+        .values("account__email__provider__name")
         .annotate(total=Sum("precio_venta"), count=Count("id"))
         .order_by("-total")
     )
@@ -129,14 +178,23 @@ def ingresos_por_proveedor(request):
 @api_view(["GET"])
 def ingresos_por_cliente(request):
     """Ingresos totalizados por cliente."""
+    fecha_desde = get_date_filter(request)
+    screens_qs = Screen.objects.exclude(status="disponible")
+    cuentas_qs = CustomerAccount.objects.all()
+
+    if fecha_desde:
+        screens_qs = screens_qs.filter(fecha_inicio__gte=fecha_desde)
+        cuentas_qs = cuentas_qs.filter(fecha_inicio__gte=fecha_desde)
+
     screens = (
-        Screen.objects.exclude(status="disponible")
+        screens_qs
         .values("customer__name")
         .annotate(total=Sum("precio_venta"), count=Count("id"))
         .order_by("-total")
     )
     cuentas = (
-        CustomerAccount.objects.values("customer__name")
+        cuentas_qs
+        .values("customer__name")
         .annotate(total=Sum("precio_venta"), count=Count("id"))
         .order_by("-total")
     )
@@ -165,8 +223,15 @@ def ingresos_por_cliente(request):
 @api_view(["GET"])
 def egresos_por_proveedor(request):
     """Egresos (compras) totalizados por proveedor."""
+    fecha_desde = get_date_filter(request)
+    accounts_qs = Account.objects.all()
+
+    if fecha_desde:
+        accounts_qs = accounts_qs.filter(fecha_compra__gte=fecha_desde)
+
     egresos = (
-        Account.objects.values("email__provider__name")
+        accounts_qs
+        .values("email__provider__name")
         .annotate(total=Sum("purchase_price"), count=Count("id"))
         .order_by("-total")
     )
@@ -233,8 +298,15 @@ def vencimientos_cliente(request):
 @api_view(["GET"])
 def egresos_por_plataforma(request):
     """Egresos (compras) totalizados por plataforma."""
+    fecha_desde = get_date_filter(request)
+    accounts_qs = Account.objects.all()
+
+    if fecha_desde:
+        accounts_qs = accounts_qs.filter(fecha_compra__gte=fecha_desde)
+
     egresos = (
-        Account.objects.values("platform__name")
+        accounts_qs
+        .values("platform__name")
         .annotate(total=Sum("purchase_price"), count=Count("id"))
         .order_by("-total")
     )
@@ -347,6 +419,8 @@ def inventario(request):
         name = account.platform.name if account.platform else "Sin plataforma"
         entry = grouped.setdefault(name, {
             "plataforma": name,
+            "total": 0,
+            "disponibles": 0,
             "cuentas": 0,
             "capacidad_pantallas": 0,
             "pantallas_vendidas": 0,
@@ -362,6 +436,8 @@ def inventario(request):
         full_sold = account.customer_accounts.filter(status__in=["activo", "por_vencer"]).exists()
         available = 0 if full_sold else max(account.max_screens - active_screens, 0)
 
+        entry["total"] += 1
+        entry["disponibles"] += available
         entry["cuentas"] += 1
         entry["capacidad_pantallas"] += account.max_screens
         entry["pantallas_vendidas"] += active_screens
@@ -378,6 +454,12 @@ def inventario(request):
 
     data = sorted(grouped.values(), key=lambda x: x["cuentas"], reverse=True)
     totales = {
+        "total": sum(item["cuentas"] for item in data),
+        "disponibles": sum(item["pantallas_disponibles"] for item in data),
+        "activas": sum(item["activas"] for item in data),
+        "por_vencer": sum(item["por_vencer"] for item in data),
+        "vencidas": sum(item["vencidas"] for item in data),
+        "caidas": sum(item["caidas"] for item in data),
         "cuentas": sum(item["cuentas"] for item in data),
         "capacidad_pantallas": sum(item["capacidad_pantallas"] for item in data),
         "pantallas_vendidas": sum(item["pantallas_vendidas"] for item in data),

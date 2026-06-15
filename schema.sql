@@ -216,6 +216,25 @@ CREATE TABLE warranty_claims (
     FOREIGN KEY (replacement_customer_account_id) REFERENCES customer_accounts(id) ON DELETE SET NULL
 );
 
+CREATE TABLE provider_warranty_claims (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    account_id INT NOT NULL,
+    provider_id INT NOT NULL,
+    claim_type ENUM('password_change', 'account_replacement', 'store_credit') NOT NULL,
+    fecha_reclamo DATE NOT NULL,
+    purchase_price DECIMAL(10, 2) NOT NULL,
+    fecha_corte DATE NOT NULL,
+    remaining_days INT NOT NULL,
+    calculated_credit DECIMAL(10, 2) DEFAULT 0.00,
+    new_credentials VARCHAR(255),
+    replacement_account_id INT,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE CASCADE,
+    FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE,
+    FOREIGN KEY (replacement_account_id) REFERENCES accounts(id) ON DELETE SET NULL
+);
+
 -- ============================================================
 -- EMAILS â€” extraÃ­dos del Excel (85 correos de 7 proveedores)
 -- ============================================================

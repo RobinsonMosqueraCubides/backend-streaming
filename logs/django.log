@@ -1454,3 +1454,9 @@ django.db.utils.ProgrammingError: (1146, "Table 'streaming_business.cobro_estado
 [2026-06-10 21:47:09,052] WARNING django.server "GET / HTTP/1.1" 404 3688
 [2026-06-10 21:47:09,172] WARNING django.request Not Found: /favicon.ico
 [2026-06-10 21:47:09,172] WARNING django.server "GET /favicon.ico HTTP/1.1" 404 3739
+[2026-06-11 22:01:07,827] WARNING django.request Not Found: /
+[2026-06-11 22:01:07,828] WARNING django.server "GET / HTTP/1.1" 404 3688
+[2026-06-11 22:03:08,902] WARNING django.request Not Found: /dashboard/resumen/
+[2026-06-11 22:03:08,902] WARNING django.server "GET /dashboard/resumen/ HTTP/1.1" 404 3760
+[2026-06-11 22:11:38,764] WARNING django.request Not Found: /
+[2026-06-11 22:11:38,765] WARNING django.server "GET / HTTP/1.1" 404 3688
