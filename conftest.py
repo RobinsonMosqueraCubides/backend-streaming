@@ -84,7 +84,7 @@ def django_db_setup(django_db_blocker):
                     platform_id INTEGER NOT NULL,
                     max_screens INTEGER DEFAULT 1,
                     credentials VARCHAR(255),
-                    status VARCHAR(10) DEFAULT 'activo',
+                    status VARCHAR(20) DEFAULT 'disponible',
                     purchase_price DECIMAL(10,2),
                     fecha_compra DATE,
                     fecha_pago DATE,
@@ -103,7 +103,7 @@ def django_db_setup(django_db_blocker):
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     customer_id INTEGER NOT NULL,
                     total DECIMAL(10,2),
-                    status VARCHAR(10) DEFAULT 'activo',
+                    status VARCHAR(20) DEFAULT 'disponible',
                     fecha_inicio DATE,
                     fecha_cobro DATE,
                     fecha_corte DATE,
@@ -144,7 +144,7 @@ def django_db_setup(django_db_blocker):
                     contrasena VARCHAR(255) NOT NULL,
                     precio_venta DECIMAL(10,2),
                     profile_name VARCHAR(255),
-                    status VARCHAR(10) DEFAULT 'activo',
+                    status VARCHAR(20) DEFAULT 'disponible',
                     fecha_inicio DATE,
                     fecha_cobro DATE,
                     fecha_corte DATE,
@@ -311,7 +311,7 @@ def account(db, platform, provider, email_obj):
         cur.execute(
             "INSERT INTO accounts (email_id, platform_id, max_screens, "
             "credentials, status, fecha_compra, fecha_pago, is_active) "
-            "VALUES (%s, %s, 4, 'user:pass', 'activo', '2026-05-01', '2026-05-29', 1)",
+            "VALUES (%s, %s, 4, 'user:pass', 'disponible', '2026-05-01', '2026-05-29', 1)",
             [email_obj, platform],
         )
         cur.execute("SELECT last_insert_rowid()")

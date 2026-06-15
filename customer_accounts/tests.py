@@ -1,4 +1,4 @@
-﻿"""
+"""
 tests_customer_accounts.py â€” Tests para la app customer_accounts.
 Cubre: modelo CustomerAccount (fecha_cobro, fecha_corte), serializers, views.
 """
@@ -64,7 +64,7 @@ class TestCustomerAccountModel:
                 [account, customer],
             )
         ca = CustomerAccount.objects.latest("id")
-        assert ca.status == "activo"
+        assert ca.status == "disponible"
 
 
 class TestCustomerAccountSerializer:

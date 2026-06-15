@@ -74,7 +74,7 @@ def apply_provider_warranty(
         
         # Actualizar credenciales de la cuenta
         account.credentials = new_credentials
-        account.status = Account.Status.ACTIVO
+        account.status = Account.Status.DISPONIBLE
         account.save(update_fields=["credentials", "status", "updated_at"])
 
         # Si se pasa nueva contraseña del correo, actualizar el modelo Email
@@ -92,8 +92,9 @@ def apply_provider_warranty(
             raise ValidationError("Debe proporcionar el correo de la cuenta de reemplazo.")
 
         # Marcar la cuenta original como caída/vencida
-        account.status = Account.Status.CAIDA
-        account.save(update_fields=["status", "updated_at"])
+        account.status = Account.Status.NO_DISPONIBLE
+        account.is_active = False
+        account.save(update_fields=["status", "is_active", "updated_at"])
 
         # Crear nuevo Email
         new_email_obj = Email.objects.create(
@@ -118,7 +119,7 @@ def apply_provider_warranty(
             platform=account.platform,
             max_screens=account.max_screens,
             credentials=new_credentials,
-            status=Account.Status.ACTIVO,
+            status=Account.Status.DISPONIBLE,
             purchase_price=Decimal("0.00"),  # Costo 0 porque es un reemplazo de garantía
             fecha_compra=new_fecha_compra,
             fecha_pago=new_fecha_pago,
@@ -136,8 +137,9 @@ def apply_provider_warranty(
 
     elif claim_type == "store_credit":
         # Marcar la cuenta original como caída/vencida
-        account.status = Account.Status.CAIDA
-        account.save(update_fields=["status", "updated_at"])
+        account.status = Account.Status.NO_DISPONIBLE
+        account.is_active = False
+        account.save(update_fields=["status", "is_active", "updated_at"])
         claim.calculated_credit = calculated_credit
 
     else:

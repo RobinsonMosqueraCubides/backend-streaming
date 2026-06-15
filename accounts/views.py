@@ -19,10 +19,20 @@ class AccountFilter(FilterSet):
 
 
 class AccountViewSet(viewsets.ModelViewSet):
-    queryset = Account.objects.select_related("platform", "email").all()
+    queryset = Account.objects.all()
     serializer_class = AccountSerializer
     filterset_class = AccountFilter
     search_fields = ["credentials", "observaciones", "notes"]
+
+    def get_queryset(self):
+        # Recalcular y guardar estados basados en el paso del tiempo
+        accounts = Account.objects.filter(is_active=True)
+        for account in accounts:
+            new_status = account.recalculate_status()
+            if account.status != new_status:
+                account.status = new_status
+                account.save(update_fields=["status", "updated_at"])
+        return Account.objects.select_related("platform", "email").all()
 
     @action(detail=True, methods=["patch"])
     def change_status(self, request, pk=None):
@@ -30,7 +40,9 @@ class AccountViewSet(viewsets.ModelViewSet):
         serializer = AccountStatusSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         account.status = serializer.validated_data["status"]
-        account.save(update_fields=["status", "updated_at"])
+        if account.status in ["no_disponible", "vencida"]:
+            account.is_active = False
+        account.save(update_fields=["status", "is_active", "updated_at"])
         return Response(AccountSerializer(account).data)
 
     @action(detail=True, methods=["get"])

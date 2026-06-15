@@ -144,13 +144,20 @@ class TestProviderWarrantyClaim:
     def test_apply_password_change_warranty(self, account, api_client):
         """Probar el reclamo de tipo cambio de contraseña."""
         from accounts.models import Account
+        from django.utils import timezone
+        from datetime import timedelta
         acc = Account.objects.get(pk=account)
+        # Asegurar fechas futuras
+        acc.fecha_compra = timezone.now().date()
+        acc.fecha_pago = timezone.now().date() + timedelta(days=28)
+        acc.fecha_corte = timezone.now().date() + timedelta(days=30)
+        acc.save()
         assert acc.credentials == "user:pass"
 
         data = {
             "account_id": account,
             "claim_type": "password_change",
-            "fecha_reclamo": "2026-05-15",
+            "fecha_reclamo": str(timezone.now().date()),
             "new_credentials": "user:newpass123",
             "notes": "Proveedor cambió contraseña",
         }
@@ -161,26 +168,28 @@ class TestProviderWarrantyClaim:
 
         acc.refresh_from_db()
         assert acc.credentials == "user:newpass123"
-        assert acc.status == "activo"
+        assert acc.status == "disponible"
 
     def test_apply_store_credit_warranty(self, account, api_client):
         """Probar el cálculo del saldo a favor proporcional."""
         from accounts.models import Account
+        from django.utils import timezone
+        from datetime import timedelta
         acc = Account.objects.get(pk=account)
         
         # Modificar el precio de compra y fecha_corte de la cuenta de prueba para el test
         acc.purchase_price = 30000.00  # Costo 30000
-        # fecha_compra: 2026-05-01, fecha_corte: 2026-05-31 (ciclo de 30 días)
-        acc.fecha_compra = "2026-05-01"
-        acc.fecha_corte = "2026-05-31"
+        hoy = timezone.now().date()
+        acc.fecha_compra = hoy
+        acc.fecha_corte = hoy + timedelta(days=30)
         acc.save()
 
-        # Reclamamos el 2026-05-21 (quedan 10 días faltantes)
-        # 10 días de 30 = 1/3. 30000 / 3 = 10000 saldo a favor.
+        # Reclamamos hoy + 20 días (quedan 10 días faltantes)
+        fecha_reclamo = hoy + timedelta(days=20)
         data = {
             "account_id": account,
             "claim_type": "store_credit",
-            "fecha_reclamo": "2026-05-21",
+            "fecha_reclamo": str(fecha_reclamo),
             "notes": "Saldo a favor por 10 días restantes",
         }
         response = api_client.post("/api/provider-warranty-claims/", data, format="json")
@@ -190,21 +199,25 @@ class TestProviderWarrantyClaim:
         assert response.data["remaining_days"] == 10
 
         acc.refresh_from_db()
-        assert acc.status == "caida"
+        assert acc.status == "no_disponible"
 
     def test_apply_account_replacement_warranty(self, account, api_client):
         """Probar el reemplazo de cuenta por garantía."""
         from accounts.models import Account
+        from django.utils import timezone
+        from datetime import timedelta
         acc = Account.objects.get(pk=account)
         acc.purchase_price = 30000.00
-        acc.fecha_compra = "2026-05-01"
-        acc.fecha_corte = "2026-05-31"
+        hoy = timezone.now().date()
+        acc.fecha_compra = hoy
+        acc.fecha_corte = hoy + timedelta(days=30)
         acc.save()
 
+        fecha_reclamo = hoy + timedelta(days=20)
         data = {
             "account_id": account,
             "claim_type": "account_replacement",
-            "fecha_reclamo": "2026-05-21",  # Quedan 10 días
+            "fecha_reclamo": str(fecha_reclamo),  # Quedan 10 días
             "new_credentials": "newuser:newpass",
             "new_email_address": "newemail@gmail.com",
             "new_email_password": "emailpassword",
@@ -215,13 +228,14 @@ class TestProviderWarrantyClaim:
         assert response.data["claim_type"] == "account_replacement"
         assert response.data["replacement_account"] is not None
 
-        # Verificar que la original está caída
+        # Verificar que la original está caída (no disponible)
         acc.refresh_from_db()
-        assert acc.status == "caida"
+        assert acc.status == "no_disponible"
 
         # Verificar la nueva cuenta
         new_acc = Account.objects.get(pk=response.data["replacement_account"])
         assert new_acc.credentials == "newuser:newpass"
         assert new_acc.email.email == "newemail@gmail.com"
-        assert str(new_acc.fecha_corte) == "2026-05-31"  # Dura los 10 días restantes (21 mayo + 10 días)
-        assert float(new_acc.purchase_price) == 0.00
+        assert str(new_acc.fecha_corte) == str(hoy + timedelta(days=30))  # Dura 10 días desde reclamo (hoy+20) = hoy+30
+        assert float(new_acc.purchase_price) == 0.00
+

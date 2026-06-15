@@ -24,7 +24,7 @@ class TestAccountModel:
     def test_fecha_pago_none_sin_fecha_compra(self, platform):
         """Si no hay fecha_compra, fecha_pago retorna None."""
         from accounts.models import Account
-        acc = Account(platform_id=platform, status="activo")
+        acc = Account(platform_id=platform, status="disponible")
         assert acc.fecha_pago is None
 
     def test_screens_count_cuenta_pantallas(self, account, screen, db):
@@ -37,7 +37,7 @@ class TestAccountModel:
         """available_screens solo cuenta pantallas con status 'disponible'."""
         from accounts.models import Account
         acc = Account.objects.get(pk=account)
-        # La screen de fixture tiene status='activo', no disponible
+        # La screen de fixture tiene status='disponible', no disponible
         assert acc.available_screens == 0
 
     def test_str_representation(self, account, platform):
@@ -53,7 +53,7 @@ class TestAccountModel:
         acc = Account(
             platform_id=platform,
             max_screens=10,
-            status="activo",
+            status="disponible",
         )
         with pytest.raises(ValidationError) as exc_info:
             acc.clean()
@@ -63,10 +63,10 @@ class TestAccountModel:
         """Los choices de status deben coincidir con los definidos."""
         from accounts.models import Account
         choices = [c[0] for c in Account.Status.choices]
-        assert "activo" in choices
+        assert "disponible" in choices
         assert "por_vencer" in choices
         assert "vencida" in choices
-        assert "caida" in choices
+        assert "no_disponible" in choices
 
     def test_fecha_pago_property(self, db, platform):
         """fecha_pago debe calcularse al hacer save() si no está definida."""
@@ -113,7 +113,7 @@ class TestAccountStatusSerializer:
     def test_acepta_status_valido(self):
         """Debe aceptar valores válidos de status."""
         from accounts.serializers import AccountStatusSerializer
-        serializer = AccountStatusSerializer(data={"status": "activo"})
+        serializer = AccountStatusSerializer(data={"status": "disponible"})
         assert serializer.is_valid()
 
     def test_rechaza_status_invalido(self):
@@ -147,7 +147,7 @@ class TestAccountViewSet:
             "email": email_obj,
             "max_screens": 4,
             "credentials": "test:pass",
-            "status": "activo",
+            "status": "disponible",
             "fecha_compra": "2026-05-01",
         }
         response = api_client.post("/api/accounts/", data, format="json")
@@ -155,7 +155,7 @@ class TestAccountViewSet:
 
     def test_filter_by_status(self, account, api_client):
         """Filtro por status debe funcionar."""
-        response = api_client.get("/api/accounts/", {"status": "activo"})
+        response = api_client.get("/api/accounts/", {"status": "disponible"})
         assert response.status_code == 200
 
     def test_filter_by_platform(self, account, platform, api_client):
@@ -166,12 +166,12 @@ class TestAccountViewSet:
     def test_change_status_action(self, account, api_client):
         """PATCH /api/accounts/:id/change_status/ debe cambiar estado."""
         response = api_client.patch(
-            f"/api/accounts/{account}/change_status/",
-            {"status": "caida"},
-            format="json",
+             f"/api/accounts/{account}/change_status/",
+             {"status": "no_disponible"},
+             format="json",
         )
         assert response.status_code == 200
-        assert response.data["status"] == "caida"
+        assert response.data["status"] == "no_disponible"
 
     def test_screens_subresource(self, account, screen, api_client):
         """GET /api/accounts/:id/screens/ debe devolver pantallas."""

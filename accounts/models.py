@@ -9,10 +9,10 @@ class Account(models.Model):
     """Cuenta de streaming en inventario (comprada a proveedor)."""
 
     class Status(models.TextChoices):
-        ACTIVO = "activo", "Activo"
+        DISPONIBLE = "disponible", "Disponible"
+        NO_DISPONIBLE = "no_disponible", "No disponible"
         POR_VENCER = "por_vencer", "Por vencer"
         VENCIDA = "vencida", "Vencida"
-        CAIDA = "caida", "Caída"
 
     email = models.ForeignKey(
         Email,
@@ -36,9 +36,9 @@ class Account(models.Model):
     )
     status = models.CharField(
         "estado",
-        max_length=10,
+        max_length=20,
         choices=Status.choices,
-        default=Status.ACTIVO,
+        default=Status.DISPONIBLE,
     )
     purchase_price = models.DecimalField(
         "precio compra", max_digits=10, decimal_places=2, blank=True, null=True
@@ -63,12 +63,60 @@ class Account(models.Model):
         plat = self.platform.name if self.platform else "?"
         return f"{plat} #{self.id} — {self.get_status_display()}"
 
+    def recalculate_status(self):
+        from django.utils import timezone
+        from datetime import datetime, date
+
+        def _to_date(val):
+            if not val:
+                return None
+            if isinstance(val, str):
+                try:
+                    return datetime.strptime(val, "%Y-%m-%d").date()
+                except ValueError:
+                    return None
+            return val
+
+        hoy = timezone.now().date()
+        corte = _to_date(self.fecha_corte)
+        pago = _to_date(self.fecha_pago)
+
+        # Si la cuenta está inactiva
+        if hasattr(self, "is_active") and not self.is_active:
+            return self.Status.NO_DISPONIBLE
+
+        # 1. Si la fecha de corte es hoy o ya pasó
+        if corte and hoy >= corte:
+            return self.Status.VENCIDA
+
+        # 2. Si la fecha de cobro es hoy (o ya estamos en esa fecha, pero antes de la de corte)
+        if pago and pago <= hoy and (not corte or hoy < corte):
+            return self.Status.POR_VENCER
+
+        # Si no se ha guardado (no tiene pk), no podemos consultar relaciones
+        if not self.pk:
+            return self.Status.DISPONIBLE
+
+        # 3. Si se vendió completa
+        if self.customer_accounts.exclude(status__in=["vencida", "caida"]).exists():
+            return self.Status.NO_DISPONIBLE
+
+        # 4. Si se vendieron todas las pantallas
+        active_screens_count = self.screens.filter(status__in=["activo", "por_vencer"]).count()
+        if active_screens_count >= self.max_screens:
+            return self.Status.NO_DISPONIBLE
+
+        return self.Status.DISPONIBLE
+
     def save(self, *args, **kwargs):
-        """Auto-calcula fecha_pago si no está definida."""
+        """Auto-calcula fechas y estado."""
         if self.fecha_compra and not self.fecha_pago:
             self.fecha_pago = self.fecha_compra + timedelta(days=28)
         if self.fecha_compra and not self.fecha_corte:
             self.fecha_corte = self.fecha_compra + timedelta(days=30)
+        
+        # Asignar estado calculado dinámicamente antes de guardar
+        self.status = self.recalculate_status()
         super().save(*args, **kwargs)
 
     @property

@@ -105,7 +105,7 @@ CREATE TABLE accounts (
     platform_id INT NOT NULL,
     max_screens TINYINT NOT NULL DEFAULT 1,
     credentials VARCHAR(255),
-    status ENUM('activo', 'por_vencer', 'vencida', 'caida') DEFAULT 'activo',
+    status VARCHAR(20) DEFAULT 'disponible',
     purchase_price DECIMAL(10,2),
     fecha_compra DATE,
     fecha_pago DATE,
@@ -157,7 +157,7 @@ CREATE TABLE customer_accounts (
     contrasena VARCHAR(255) NOT NULL,         -- en vez de PIN
     precio_venta DECIMAL(10,2),
     profile_name VARCHAR(255),
-    status ENUM('activo', 'por_vencer', 'vencida', 'caida') DEFAULT 'activo',
+    status VARCHAR(20) DEFAULT 'disponible',
     fecha_inicio DATE,
     fecha_cobro DATE,                          -- calculado al crear (inicio+29d), editable
     fecha_corte DATE,                          -- calculado al crear (inicio+30d), editable
@@ -359,8 +359,8 @@ INSERT INTO emails (email, password, provider_id) VALUES
 
 -- P SIR â€” 3 cuentas
 INSERT INTO accounts (email_id, platform_id, purchase_price, status, is_active, observaciones) VALUES
-  ((SELECT id FROM emails WHERE email = 'crunchroll0020-fz0056@strampre77.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Crunchyroll'), '5000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'hbo.71ca+9i6@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '7000.0', 'activo', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'crunchroll0020-fz0056@strampre77.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Crunchyroll'), '5000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'hbo.71ca+9i6@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '7000.0', 'disponible', TRUE, NULL),
   ((SELECT id FROM emails WHERE email = 'Vix77pre+dmor@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'VIX'), '1666.666667', 'vencida', FALSE, NULL);
 
 -- P Brayan â€” 4 cuentas
@@ -372,41 +372,41 @@ INSERT INTO accounts (email_id, platform_id, purchase_price, status, is_active, 
 
 -- P CHARLIES â€” 11 cuentas
 INSERT INTO accounts (email_id, platform_id, purchase_price, status, is_active, observaciones) VALUES
-  ((SELECT id FROM emails WHERE email = 'ch311564+22@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '7000.0', 'activo', TRUE, 'No ha preguntado y no la han cobrado'),
-  ((SELECT id FROM emails WHERE email = 'rey.19.84c@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'dairo10@newaddr.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'dairo10@newaddr.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'Ssh251521@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '8000.0', 'activo', TRUE, 'No ha preguntado y no la han cobrado'),
-  ((SELECT id FROM emails WHERE email = 'Luisusraez2772@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'za.ul49.51@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'der.1984c@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'xilen.a.89.8@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'ihamdiaz568@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'activo', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'ch311564+22@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '7000.0', 'disponible', TRUE, 'No ha preguntado y no la han cobrado'),
+  ((SELECT id FROM emails WHERE email = 'rey.19.84c@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'dairo10@newaddr.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'dairo10@newaddr.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'Ssh251521@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '8000.0', 'disponible', TRUE, 'No ha preguntado y no la han cobrado'),
+  ((SELECT id FROM emails WHERE email = 'Luisusraez2772@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'za.ul49.51@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'der.1984c@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'xilen.a.89.8@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'ihamdiaz568@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'disponible', TRUE, NULL),
   ((SELECT id FROM emails WHERE email = 'geileissatteroi-4218@yopmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '32000.0', 'vencida', FALSE, 'me debe 2 dias');
 
 -- P WILLIAM â€” 21 cuentas
 INSERT INTO accounts (email_id, platform_id, purchase_price, status, is_active, observaciones) VALUES
-  ((SELECT id FROM emails WHERE email = 'netflow10@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'activo', TRUE, '15/08/1998 HOMBRE'),
-  ((SELECT id FROM emails WHERE email = 'tolidisney230@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'activo', TRUE, '15/08/1998 HOMBRE'),
-  ((SELECT id FROM emails WHERE email = 'netflixoriginal55@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '30000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'moviplus4@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'tucuentanetflix309@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '25000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'moviplus9@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '22000.0', 'activo', TRUE, '15/8/1998 hombre'),
-  ((SELECT id FROM emails WHERE email = 'tolidisney211@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '22000.0', 'activo', TRUE, '15/8/1998 hombre'),
-  ((SELECT id FROM emails WHERE email = 'disneypremium25@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'tuamazonetigo01@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '8000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'tolidisney228@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'paramex1@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '8000.0', 'activo', TRUE, 'Valor inesperado en vencimiento: 10000.0'),
-  ((SELECT id FROM emails WHERE email = 'disneypremium07@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'disneyfeb2@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'disneypremium171@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'tolidisney45@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'paramountetb3@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '8000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'humberto2026@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'martha2026ballesteros@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'jhon2026@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'paramountetb1@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '8000.0', 'activo', TRUE, 'no renovar | Valor inesperado en vencimiento: 10000.0'),
-  ((SELECT id FROM emails WHERE email = 'netflow2@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'activo', TRUE, '15/08/1998 HOMBRE');
+  ((SELECT id FROM emails WHERE email = 'netflow10@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'disponible', TRUE, '15/08/1998 HOMBRE'),
+  ((SELECT id FROM emails WHERE email = 'tolidisney230@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'disponible', TRUE, '15/08/1998 HOMBRE'),
+  ((SELECT id FROM emails WHERE email = 'netflixoriginal55@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '30000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'moviplus4@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'tucuentanetflix309@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '25000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'moviplus9@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '22000.0', 'disponible', TRUE, '15/8/1998 hombre'),
+  ((SELECT id FROM emails WHERE email = 'tolidisney211@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '22000.0', 'disponible', TRUE, '15/8/1998 hombre'),
+  ((SELECT id FROM emails WHERE email = 'disneypremium25@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'tuamazonetigo01@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '8000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'tolidisney228@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'paramex1@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '8000.0', 'disponible', TRUE, 'Valor inesperado en vencimiento: 10000.0'),
+  ((SELECT id FROM emails WHERE email = 'disneypremium07@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'disneyfeb2@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'disneypremium171@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'tolidisney45@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'paramountetb3@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '8000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'humberto2026@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'martha2026ballesteros@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'jhon2026@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'paramountetb1@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '8000.0', 'disponible', TRUE, 'no renovar | Valor inesperado en vencimiento: 10000.0'),
+  ((SELECT id FROM emails WHERE email = 'netflow2@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '18000.0', 'disponible', TRUE, '15/08/1998 HOMBRE');
 
 -- P FENIX â€” 5 cuentas
 INSERT INTO accounts (email_id, platform_id, purchase_price, status, is_active, observaciones) VALUES
@@ -414,65 +414,65 @@ INSERT INTO accounts (email_id, platform_id, purchase_price, status, is_active, 
   ((SELECT id FROM emails WHERE email = 'minerxxs118620@yarift.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '30000.0', 'vencida', FALSE, NULL),
   ((SELECT id FROM emails WHERE email = 'btracy27@yarift.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '30000.0', 'vencida', FALSE, NULL),
   ((SELECT id FROM emails WHERE email = 'eborahfac@yarift.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '30000.0', 'vencida', FALSE, NULL),
-  ((SELECT id FROM emails WHERE email = 'farhadakbari07@fenixis.co' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '30000.0', 'activo', TRUE, 'no la cobaron parece gratis');
+  ((SELECT id FROM emails WHERE email = 'farhadakbari07@fenixis.co' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '30000.0', 'disponible', TRUE, 'no la cobaron parece gratis');
 
 -- P VARIOS â€” 21 cuentas (7 eliminadas por emails duplicados con P ADRIANA)
 INSERT INTO accounts (email_id, platform_id, purchase_price, status, is_active, observaciones) VALUES
-  ((SELECT id FROM emails WHERE email = 'streamingmodz+tussi@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '10000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'morenosilvajuan2@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '10000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'lucasgakvism@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '12000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'morenosilvajaime194@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '12000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'dia.naleonn63@santreamteo.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '13000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'mendozasilvahellen@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '13000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'mendozamorenomilena@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '12000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'endersonmolinaneuque@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '12000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'callista644ff@hotmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '3000.0', 'activo', TRUE, 'Elias Pizarro Proveedor Valencia Stream password Hotmail:Prime211'),
-  ((SELECT id FROM emails WHERE email = 'ovidiomorenosilva@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '12000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'duarteandr@twoperfil.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'ChatGPT'), '20000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'paramountetb3@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '4000.0', 'activo', TRUE, 'Paramount Wiliam'),
-  ((SELECT id FROM emails WHERE email = 'paramountetb3@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '4000.0', 'activo', TRUE, 'Paramount Wiliam'),
-  ((SELECT id FROM emails WHERE email = 'julioadams377@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '10000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'sotomanu0273k+sds2@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '10000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'humberto2026@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'activo', TRUE, 'William'),
-  ((SELECT id FROM emails WHERE email = 'paramex1@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '8000.0', 'activo', TRUE, 'William'),
-  ((SELECT id FROM emails WHERE email = 'martha2026ballesteros@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'activo', TRUE, 'William'),
-  ((SELECT id FROM emails WHERE email = 'jhon2026@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'activo', TRUE, 'William'),
-  ((SELECT id FROM emails WHERE email = 'web.disneyplus+G0047@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '20000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor'),
-  ((SELECT id FROM emails WHERE email = 'wellian57@oneperfil.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '20000.0', 'activo', TRUE, 'ModzStreaming ï£¿ Proveedor');
+  ((SELECT id FROM emails WHERE email = 'streamingmodz+tussi@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '10000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'morenosilvajuan2@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '10000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'lucasgakvism@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '12000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'morenosilvajaime194@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '12000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'dia.naleonn63@santreamteo.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '13000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'mendozasilvahellen@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '13000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'mendozamorenomilena@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '12000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'endersonmolinaneuque@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '12000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'callista644ff@hotmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '3000.0', 'disponible', TRUE, 'Elias Pizarro Proveedor Valencia Stream password Hotmail:Prime211'),
+  ((SELECT id FROM emails WHERE email = 'ovidiomorenosilva@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), '12000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'duarteandr@twoperfil.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'ChatGPT'), '20000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'paramountetb3@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '4000.0', 'disponible', TRUE, 'Paramount Wiliam'),
+  ((SELECT id FROM emails WHERE email = 'paramountetb3@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '4000.0', 'disponible', TRUE, 'Paramount Wiliam'),
+  ((SELECT id FROM emails WHERE email = 'julioadams377@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '10000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'sotomanu0273k+sds2@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '10000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'humberto2026@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'disponible', TRUE, 'William'),
+  ((SELECT id FROM emails WHERE email = 'paramex1@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Paramount+'), '8000.0', 'disponible', TRUE, 'William'),
+  ((SELECT id FROM emails WHERE email = 'martha2026ballesteros@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'disponible', TRUE, 'William'),
+  ((SELECT id FROM emails WHERE email = 'jhon2026@kikoshop.net' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Directv Go'), '24000.0', 'disponible', TRUE, 'William'),
+  ((SELECT id FROM emails WHERE email = 'web.disneyplus+G0047@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '20000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor'),
+  ((SELECT id FROM emails WHERE email = 'wellian57@oneperfil.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Disney+'), '20000.0', 'disponible', TRUE, 'ModzStreaming ï£¿ Proveedor');
 
 -- P ADRIANA â€” 23 cuentas
 INSERT INTO accounts (email_id, platform_id, purchase_price, status, is_active, observaciones) VALUES
-  ((SELECT id FROM emails WHERE email = 'stremingflix009@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '30000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'stremingflix024@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'stremingflix025@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'activo', TRUE, 'cliente jodido'),
-  ((SELECT id FROM emails WHERE email = 'stremingflix001@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '26900.0', 'activo', TRUE, 'TARJETA NU'),
-  ((SELECT id FROM emails WHERE email = 'stremingflix010@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'activo', TRUE, '2P'),
-  ((SELECT id FROM emails WHERE email = 'stremingflix031@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '9900.0', 'activo', TRUE, 'ASOCIADO A NATALY'),
-  ((SELECT id FROM emails WHERE email = 'stremingflix002@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Spotify'), NULL, 'activo', TRUE, 'Carrera 3W #8N-265, Piedecuesta, Santander'),
-  ((SELECT id FROM emails WHERE email = 'stremingflix001@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Spotify'), NULL, 'activo', TRUE, 'Carrera 3W #8N-265, Piedecuesta, Santander'),
-  ((SELECT id FROM emails WHERE email = 'agaray2107@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Spotify'), NULL, 'activo', TRUE, 'Carrera 3W #8N-265, Piedecuesta, Santander'),
-  ((SELECT id FROM emails WHERE email = 'stremingflix015@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'activo', TRUE, 'Cliente jodido'),
-  ((SELECT id FROM emails WHERE email = 'robin.mosquera13@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Crunchyroll'), NULL, 'activo', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'stremingflix009@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '30000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'stremingflix024@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'stremingflix025@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'disponible', TRUE, 'cliente jodido'),
+  ((SELECT id FROM emails WHERE email = 'stremingflix001@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '26900.0', 'disponible', TRUE, 'TARJETA NU'),
+  ((SELECT id FROM emails WHERE email = 'stremingflix010@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'disponible', TRUE, '2P'),
+  ((SELECT id FROM emails WHERE email = 'stremingflix031@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '9900.0', 'disponible', TRUE, 'ASOCIADO A NATALY'),
+  ((SELECT id FROM emails WHERE email = 'stremingflix002@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Spotify'), NULL, 'disponible', TRUE, 'Carrera 3W #8N-265, Piedecuesta, Santander'),
+  ((SELECT id FROM emails WHERE email = 'stremingflix001@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Spotify'), NULL, 'disponible', TRUE, 'Carrera 3W #8N-265, Piedecuesta, Santander'),
+  ((SELECT id FROM emails WHERE email = 'agaray2107@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Spotify'), NULL, 'disponible', TRUE, 'Carrera 3W #8N-265, Piedecuesta, Santander'),
+  ((SELECT id FROM emails WHERE email = 'stremingflix015@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'disponible', TRUE, 'Cliente jodido'),
+  ((SELECT id FROM emails WHERE email = 'robin.mosquera13@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Crunchyroll'), NULL, 'disponible', TRUE, NULL),
   ((SELECT id FROM emails WHERE email = 'stremingflix019@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '50000.0', 'por_vencer', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'stremingflix016@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'agaray2107@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '40000.0', 'activo', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'stremingflix016@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'agaray2107@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '40000.0', 'disponible', TRUE, NULL),
   ((SELECT id FROM emails WHERE email = 'agaraystore@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '9900.0', 'por_vencer', TRUE, 'asociado a stremingflix019@gmail.com'),
-  ((SELECT id FROM emails WHERE email = 'stremingflix020@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'stremingflix002@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'stremingflix006@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'stremingflix022@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'activo', TRUE, NULL),
-  ((SELECT id FROM emails WHERE email = 'stremingflix017@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'activo', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'stremingflix020@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'stremingflix002@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'stremingflix006@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'stremingflix022@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'disponible', TRUE, NULL),
+  ((SELECT id FROM emails WHERE email = 'stremingflix017@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'disponible', TRUE, NULL),
   ((SELECT id FROM emails WHERE email = 'stremingflix007@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'vencida', FALSE, NULL),
   ((SELECT id FROM emails WHERE email = 'stremingflix005@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Netflix'), '20000.0', 'vencida', FALSE, NULL),
-  ((SELECT id FROM emails WHERE email = 'stremingflix009@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '12000.0', 'activo', TRUE, 'TARJETA NU'),
-  ((SELECT id FROM emails WHERE email = 'stremingflix001@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '12000.0', 'activo', TRUE, 'HBO Max â€” pantalla adicional');
+  ((SELECT id FROM emails WHERE email = 'stremingflix009@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '12000.0', 'disponible', TRUE, 'TARJETA NU'),
+  ((SELECT id FROM emails WHERE email = 'stremingflix001@gmail.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'HBO Max'), '12000.0', 'disponible', TRUE, 'HBO Max â€” pantalla adicional');
 
 -- Total: 90 cuentas
 
 -- ============================================================
 -- Cuenta faltante (solo aparece en ventas, no en proveedores)
 INSERT INTO accounts (email_id, platform_id, status, is_active) VALUES
-  ((SELECT id FROM emails WHERE email = 'BRUMA286@servineira.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), 'activo', TRUE);
+  ((SELECT id FROM emails WHERE email = 'BRUMA286@servineira.com' LIMIT 1), (SELECT id FROM platforms WHERE name = 'Prime Video'), 'disponible', TRUE);
 
 -- CUSTOMERS â€” extraÃ­dos de hojas de ventas/pantallas
 -- ============================================================

@@ -76,6 +76,9 @@ class CustomerAccount(models.Model):
             if not self.fecha_corte:
                 self.fecha_corte = self.fecha_inicio + timedelta(days=30)
         super().save(*args, **kwargs)
+        # Recalcular y guardar el estado de la cuenta asociada
+        if self.account:
+            self.account.save(update_fields=["status", "updated_at"])
 
     def __str__(self):
         acc = self.account_id or "?"
